@@ -3,78 +3,72 @@
 namespace App\Http\Controllers;
 
 use App\Models\Checkin;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Services\WeezeventService;
+
 
 class CheckinController extends Controller
 {
-    public function create()
-    {
-        return view('checkins.create');
-    }
+public function index()
+{
+    $scans = \DB::table('checkins as s')
+        ->leftJoin('checkins as p', function ($join) {
+            $join->on('s.weez_ticket_code', '=', 'p.weez_ticket_code')
+                 ->whereNotNull('p.firstname');
+        })
+        ->whereNotNull('s.scan_date')
+        ->orderByDesc('s.entry_at')
+        ->select([
+            's.weez_ticket_code',
+            's.scan_date',
+            's.entry_at',
+            's.exit_at',
+            'p.firstname',
+            'p.lastname',
+            'p.company',
+            'p.email',
+            'p.purpose',
+        ])
+        ->get();
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'firstname' => 'required',
-            'lastname'  => 'required',
-            'purpose'   => 'required',
-        ]);
+    return view('admin.checkins.index', [
+        'scans' => $scans
+    ]);
+}
+public function edit(string $code)
+{
+    $checkin = Checkin::where('weez_ticket_code', $code)
+        ->whereNotNull('scan_date')
+        ->orderByDesc('entry_at')
+        ->firstOrFail();
 
-        $checkin = Checkin::create([
-            'firstname' => $request->firstname,
-            'lastname'  => $request->lastname,
-            'email'     => $request->email,
-            'purpose'   => $request->purpose,
-            'qr_token'  => Str::uuid(),
-        ]);
+    return view('admin.checkins.edit', compact('checkin'));
+}
 
-        return view('checkins.confirm', compact('checkin'));
-    }
-
-    public function index()
-    {
-        $checkins = Checkin::latest()->get();
-        return view('admin.checkins.index', compact('checkins'));
-    }
-
-    public function scan($token)
-    {
-        $checkin = Checkin::where('qr_token', $token)->firstOrFail();
-
-        if (!$checkin->checked_in_at) {
-            $checkin->update(['checked_in_at' => now()]);
-        }
-
-        return view('admin.checkins.scan', compact('checkin'));
-    }
-    public function scanWeezevent(
-    Request $request,
-    WeezeventService $weez
-) {
+public function update(Request $request, string $code)
+{
     $request->validate([
-        'barcode' => 'required|string',
+        'firstname' => 'nullable|string|max:191',
+        'lastname'  => 'nullable|string|max:191',
+        'company'   => 'nullable|string|max:191',
+        'email'     => 'nullable|email|max:191',
+        'purpose'   => 'nullable|string|max:191',
     ]);
 
-    $data = $weez->validateTicket($request->barcode);
+    Checkin::where('weez_ticket_code', $code)
+        ->whereNotNull('scan_date')
+        ->update($request->only([
+            'firstname',
+            'lastname',
+            'company',
+            'email',
+            'purpose',
+        ]));
 
-    if (!$data) {
-        return back()->withErrors(['barcode' => 'Billet invalide']);
-    }
-
-    $checkin = Checkin::updateOrCreate(
-        ['weez_ticket_code' => $request->barcode],
-        [
-            'firstname' => $data['firstname'] ?? '—',
-            'lastname'  => $data['lastname'] ?? '—',
-            'email'     => $data['email'] ?? null,
-            'weez_event_id' => $data['event_id'],
-            'weez_participant_id' => $data['participant_id'],
-            'checked_in_at' => now(),
-        ]
-    );
-
-    return view('admin.checkins.scan', compact('checkin'));
+    return redirect()
+        ->route('checkins.index')
+        ->with('success', 'Visiteur mis à jour avec succès');
 }
+
+
+
 }

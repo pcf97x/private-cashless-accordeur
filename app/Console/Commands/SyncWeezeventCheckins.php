@@ -19,7 +19,6 @@ class SyncWeezeventCheckins extends Command
 
         foreach ($participants as $p) {
 
-            // ⛔ Pas de scan valide
             if (
                 empty($p['barcode']) ||
                 empty($p['control_status']['date_scan']) ||
@@ -28,7 +27,7 @@ class SyncWeezeventCheckins extends Command
                 continue;
             }
 
-            // 🕒 Weezevent = UTC → Guyane
+            // Weezevent = UTC → Guyane
             $scanAt = Carbon::createFromFormat(
                 'Y-m-d H:i:s',
                 $p['control_status']['date_scan'],
@@ -37,23 +36,40 @@ class SyncWeezeventCheckins extends Command
 
             $scanDate = $scanAt->toDateString();
 
-            // 🔒 1 billet / jour
-            $checkin = Checkin::firstOrCreate(
-                [
-                    'weez_ticket_code' => $p['barcode'],
-                    'scan_date'        => $scanDate,
-                ],
-                [
-                    'weez_participant_id' => $p['id_participant'],
-                    'weez_event_id'       => $p['id_evenement'],
-                    'entry_at'            => $scanAt,
-                ]
-            );
+            // 🔎 ON RATTACHE AU DOSSIER EXISTANT SI POSSIBLE
+            $checkin = Checkin::where('weez_ticket_code', $p['barcode'])
+                ->where('scan_date', $scanDate)
+                ->first();
 
-            // 🔁 Scan suivant = sortie
-            if ($checkin->entry_at && !$checkin->exit_at && $scanAt->gt($checkin->entry_at)) {
-                $checkin->update([
-                    'exit_at' => $scanAt
+            if (!$checkin) {
+                // 🔎 Tentative de rattachement à une fiche créée via /acces
+                $checkin = Checkin::where('weez_ticket_code', $p['barcode'])
+                    ->whereNull('scan_date')
+                    ->first();
+            }
+
+            if ($checkin) {
+                // 🟢 Mise à jour de la fiche existante
+                if (!$checkin->entry_at) {
+                    $checkin->update([
+                        'scan_date' => $scanDate,
+                        'entry_at'  => $scanAt,
+                        'weez_event_id' => $p['id_evenement'],
+                        'weez_participant_id' => $p['id_participant'],
+                    ]);
+                } elseif (!$checkin->exit_at && $scanAt->gt($checkin->entry_at)) {
+                    $checkin->update([
+                        'exit_at' => $scanAt
+                    ]);
+                }
+            } else {
+                // 🆕 Cas inconnu → création brute
+                Checkin::create([
+                    'weez_ticket_code'    => $p['barcode'],
+                    'weez_event_id'       => $p['id_evenement'],
+                    'weez_participant_id' => $p['id_participant'],
+                    'scan_date'           => $scanDate,
+                    'entry_at'            => $scanAt,
                 ]);
             }
         }

@@ -17,6 +17,8 @@
     <label>Nom</label><br>
     <input type="text" name="lastname" required><br><br>
 
+    <label>Société (optionnel)</label><br>
+    <input type="text" name="company" placeholder="Nom de la société"><br><br>
     <label>Email</label><br>
     <input type="email" name="email"><br><br>
 

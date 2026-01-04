@@ -1,35 +1,63 @@
+@extends('layouts.app')
 
+@section('content')
+<div class="container">
+    <h1 class="mb-4">Pointage visiteurs</h1>
 
-
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl">
-            Pointage visiteurs
-        </h2>
-    </x-slot>
-<form method="POST" action="{{ route('checkins.scan.weez') }}">
-    @csrf
-    <input
-        name="barcode"
-        placeholder="Scanner le QR billet"
-        autofocus
-        class="border p-2"
-    >
-    <button class="ml-2 bg-black text-white px-4 py-2">
-        Scanner
-    </button>
-</form>
-
-    <div class="p-6">
-        @foreach($checkins as $c)
-            <div class="mb-2">
-                {{ $c->firstname }} {{ $c->lastname }} —
-                {{ $c->checked_in_at ? '✅ Présent' : '⏳ En attente' }}
-                <a class="underline ml-2"
-                   href="/admin/checkins/scan/{{ $c->qr_token }}">
-                    Scanner
-                </a>
-            </div>
-        @endforeach
-    </div>
-</x-app-layout>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Société</th>
+                <th>Motif</th>
+                <th>Entrée</th>
+                <th>Sortie</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($scans as $row)
+                <tr>
+                    <td>{{ $row->lastname ?? '—' }}</td>
+                    <td>{{ $row->firstname ?? '—' }}</td>
+                    <td>{{ $row->company ?? '—' }}</td>
+                    <td>{{ $row->purpose ?? '—' }}</td>
+                    <td>
+                        {{ $row->entry_at ? \Carbon\Carbon::parse($row->entry_at)->format('H:i') : '—' }}
+                    </td>
+                    <td>
+                        {{ $row->exit_at ? \Carbon\Carbon::parse($row->exit_at)->format('H:i') : '—' }}
+                    </td>
+                    <td>
+                        @if($row->entry_at && !$row->exit_at)
+                            🟢 Présent
+                        @elseif($row->exit_at)
+                            🔴 Sorti
+                        @else
+                            ⏳ En attente
+                        @endif
+                    </td>
+                    <td>
+    <a href="{{ route('checkins.edit', $row->weez_ticket_code) }}"
+       class="btn btn-sm btn-outline-primary">
+        ✏️ Compléter
+    </a>
+</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="7" class="text-center">Aucun scan</td>
+                    <td>
+    <a href="{{ route('checkins.edit', $row->weez_ticket_code) }}"
+       class="btn btn-sm btn-outline-primary">
+        ✏️ Compléter
+    </a>
+</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
+@endsection

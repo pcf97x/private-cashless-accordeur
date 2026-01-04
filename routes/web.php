@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\AccessController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\ContactController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -22,16 +23,39 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+
+
 Route::middleware(['auth'])->group(function () {
-    Route::get('/admin/checkins', [CheckinController::class, 'index']);
+   Route::get('/admin/checkins', [CheckinController::class, 'index'])
+    ->name('checkins.index');
     Route::get('/admin/checkins/scan/{token}', [CheckinController::class, 'scan']);
 });
+
+
+
 
 Route::middleware(['auth'])->post(
     '/admin/checkins/scan-weez',
     [CheckinController::class, 'scanWeezevent']
 )->name('checkins.scan.weez');
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/checkins/{code}/edit', [CheckinController::class, 'edit'])
+        ->name('checkins.edit');
+
+    Route::post('/admin/checkins/{code}', [CheckinController::class, 'update'])
+        ->name('checkins.update');
+});
+
+Route::middleware(['auth'])->get(
+    '/admin/contacts',
+    [\App\Http\Controllers\Admin\ContactController::class, 'index']
+)->name('admin.contacts.index');
 
 
+
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
+});
 require __DIR__.'/auth.php';
