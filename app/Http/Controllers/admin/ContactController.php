@@ -28,15 +28,19 @@ class ContactController extends Controller
 
         return view('admin.contacts.index', compact('contacts'));
     }
-    public function show(Contact $contact)
+ 
+ 
+ 
+ public function show(Contact $contact)
 {
-    $contact->load([
-        'checkins' => function ($q) {
-            $q->orderByDesc('entry_at');
-        }
-    ]);
+    $checkins = $contact->checkins()
+        ->orderByDesc('entry_at')
+        ->get();
 
-    return view('admin.contacts.show', compact('contact'));
+    return view('admin.contacts.show', [
+        'contact'  => $contact,
+        'checkins' => $checkins,
+    ]);
 }
 
 

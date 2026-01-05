@@ -18,4 +18,5 @@ class Contact extends Model
     {
         return $this->hasMany(Checkin::class);
     }
+    
 }

@@ -1,85 +1,89 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="max-w-4xl mx-auto py-8 space-y-6">
 
-    <a href="{{ route('admin.contacts.index') }}" class="mb-3 d-inline-block">
+    <a href="{{ route('admin.contacts.index') }}" class="text-sm text-blue-600 hover:underline">
         ← Retour aux contacts
     </a>
 
-    <h1 class="mb-3">
-        {{ $contact->firstname }} {{ $contact->lastname }}
-    </h1>
+    {{-- FICHE CONTACT --}}
+    <div class="bg-white shadow rounded-lg p-6">
+        <h1 class="text-2xl font-bold mb-4">
+            {{ $contact->firstname }} {{ $contact->lastname }}
+        </h1>
 
-    {{-- INFOS CONTACT --}}
-    <div class="card mb-4">
-        <div class="card-body">
-            <p><strong>Société :</strong> {{ $contact->company ?? '—' }}</p>
-            <p><strong>Email :</strong> {{ $contact->email }}</p>
-            <p><strong>Téléphone :</strong> {{ $contact->phone ?? '—' }}</p>
-            <p><strong>Nombre de visites :</strong> {{ $contact->checkins->count() }}</p>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div><strong>Société :</strong> {{ $contact->company ?? '—' }}</div>
+            <div><strong>Email :</strong> {{ $contact->email ?? '—' }}</div>
+            <div><strong>Téléphone :</strong> {{ $contact->phone ?? '—' }}</div>
+            <div><strong>Nombre de visites :</strong> {{ $checkins->count() }}</div>
         </div>
     </div>
 
+    {{-- QR CODE --}}
+    @php
+        $lastCheckin = $checkins->first();
+    @endphp
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="font-semibold mb-3">QR Code</h2>
+
+        @if($lastCheckin && $lastCheckin->qr_token)
+            <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ $lastCheckin->qr_token }}"
+                alt="QR Code"
+                class="border p-2"
+            >
+            <p class="text-xs text-gray-500 mt-2">
+                Token : {{ $lastCheckin->qr_token }}
+            </p>
+        @else
+            <p class="text-sm text-gray-500">Aucun QR code disponible</p>
+        @endif
+    </div>
+
     {{-- HISTORIQUE --}}
-    <h3>Historique des passages</h3>
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="font-semibold mb-4">Historique des passages</h2>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Entrée</th>
-                <th>Sortie</th>
-                <th>Motif</th>
-                <th>QR Code</th>
-                <th>Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-        @forelse($contact->checkins as $checkin)
-            <tr>
-                <td>{{ $checkin->scan_date?->format('d/m/Y') ?? '—' }}</td>
-
-                <td>{{ $checkin->entry_at?->format('H:i') ?? '—' }}</td>
-
-                <td>{{ $checkin->exit_at?->format('H:i') ?? '—' }}</td>
-
-                <td>{{ $checkin->purpose ?? '—' }}</td>
-
-                <td>
-                    @if($checkin->qr_token)
-                        <a href="{{ url('/admin/checkins/scan/'.$checkin->qr_token) }}">
-                            🔳 Scanner
-                        </a>
-                    @else
-                        —
-                    @endif
-                </td>
-
-                <td>
-                    @if($checkin->exit_at)
-                        🔴 Sorti
-                    @else
-                        🟢 Présent
-                    @endif
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="6" class="text-center">Aucun passage enregistré</td>
-            </tr>
-        @endforelse
-        </tbody>
-    </table>
+        @if($checkins->isEmpty())
+            <p class="text-sm text-gray-500">Aucun passage enregistré</p>
+        @else
+            <table class="w-full text-sm border">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-2 text-left">Entrée</th>
+                        <th class="p-2 text-left">Sortie</th>
+                        <th class="p-2 text-left">Motif</th>
+                        <th class="p-2 text-left">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($checkins as $checkin)
+                        <tr class="border-t">
+                            <td class="p-2">{{ $checkin->entry_at ?? '—' }}</td>
+                            <td class="p-2">{{ $checkin->exit_at ?? '—' }}</td>
+                            <td class="p-2">{{ $checkin->purpose ?? '—' }}</td>
+                            <td class="p-2">
+                                @if($checkin->exit_at)
+                                    <span class="text-red-600">Sorti</span>
+                                @else
+                                    <span class="text-green-600">Présent</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    </div>
 
     {{-- ACTIONS FUTURES --}}
-    <div class="mt-4">
-        <h4>Actions</h4>
-        <ul>
-            <li>✉️ Envoyer email (à venir)</li>
-            <li>📲 Envoyer SMS (à venir)</li>
-            <li>🔁 Renvoyer QR Code</li>
-        </ul>
+    <div class="flex gap-4">
+        <button class="btn-secondary" disabled>📧 Envoyer email</button>
+        <button class="btn-secondary" disabled>📱 Envoyer SMS</button>
+        <button class="btn-primary" disabled>🔁 Renvoyer QR Code</button>
     </div>
 
 </div>

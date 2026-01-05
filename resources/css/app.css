@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.dashboard-card {
+    padding: 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+}
+
+.dashboard-card span {
+    font-size: 0.8rem;
+    font-weight: normal;
+    margin-top: 4px;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+}

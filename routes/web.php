@@ -5,6 +5,7 @@ use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\AccessController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -17,6 +18,10 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+
+
+Route::middleware(['auth'])->get('/dashboard', [DashboardController::class, 'index'])
+    ->name('dashboard');
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -28,7 +33,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth'])->group(function () {
    Route::get('/admin/checkins', [CheckinController::class, 'index'])
     ->name('checkins.index');
-    Route::get('/admin/checkins/scan/{token}', [CheckinController::class, 'scan']);
+   Route::get('/admin/checkins/scan/{token}', [CheckinController::class, 'scan'])
+    ->name('admin.checkins.scan');
 });
 
 
@@ -58,4 +64,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
     Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
 });
+
+
 require __DIR__.'/auth.php';
