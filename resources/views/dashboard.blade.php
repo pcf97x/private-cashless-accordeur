@@ -39,12 +39,12 @@
 
         <div class="stat-card">
             🟢 Présents maintenant
-            <strong>{{ $presentNow }}</strong>
+            <strong>{{ $presentCount }}</strong>
         </div>
 
         <div class="stat-card">
             🔄 Entrées aujourd’hui
-            <strong>{{ $todayEntries }}</strong>
+            <strong>{{ $todayCount }}</strong>
         </div>
 
         <div class="stat-card">
