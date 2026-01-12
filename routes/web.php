@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\AccessController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\admin\ContactController;
 use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
@@ -57,7 +57,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->get(
     '/admin/contacts',
-    [\App\Http\Controllers\Admin\ContactController::class, 'index']
+    [\App\Http\Controllers\admin\ContactController::class, 'index']
 )->name('admin.contacts.index');
 
 

@@ -18,7 +18,8 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($scans as $row)
+        @if($scans->count())    
+	@forelse ($scans as $row)
                 <tr>
                     <td>{{ $row->lastname ?? '—' }}</td>
                     <td>{{ $row->firstname ?? '—' }}</td>
@@ -57,6 +58,13 @@
 </td>
                 </tr>
             @endforelse
+@else
+    <tr>
+        <td colspan="7" class="text-center text-muted">
+            Aucun pointage enregistré
+        </td>
+    </tr>
+@endif
         </tbody>
     </table>
 </div>
