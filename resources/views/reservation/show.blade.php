@@ -60,9 +60,13 @@
             <input type="text" name="name" placeholder="Nom" value="{{ old('name', $user?->name) }}">
             <input type="email" name="email" placeholder="Email" value="{{ old('email', $user?->email) }}">
             <input type="text" name="phone" placeholder="Téléphone" value="{{ old('phone') }}">
-            <button type="submit">Réserver</button>
+            <button  type="button" id="reserveBtn">Réserver</button>
+            
         </div>
     </form>
+    <span id="loading" style="display:none; margin-left:10px;">
+    ⏳ Paiement en cours…
+</span>
 </div>
 
 <script>
@@ -102,6 +106,43 @@ async function fetchPrice() {
     document.getElementById(id).addEventListener('change', fetchPrice)
 );
 document.querySelector('input[name="date"]').addEventListener('change', fetchPrice);
+</script>
+<script>
+document.getElementById('reserveBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('reserveBtn');
+    const loader = document.getElementById('loading');
+
+    btn.disabled = true;
+    loader.style.display = 'inline';
+
+    const form = btn.closest('form');
+    const formData = new FormData(form);
+
+    try {
+        const res = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.checkout_url) {
+            window.location.href = data.checkout_url;
+        } else {
+            alert('Erreur lors de la création du paiement');
+            btn.disabled = false;
+            loader.style.display = 'none';
+        }
+    } catch (e) {
+        alert('Erreur réseau');
+        btn.disabled = false;
+        loader.style.display = 'none';
+    }
+});
 </script>
 
 @endsection

@@ -148,7 +148,14 @@ public function show(Room $room)
             'status' => 'pending',
         ]);
 
-        return redirect()->route('reservation.pay', $reservation);
+        if ($request->wantsJson()) {
+    return response()->json([
+        'checkout_url' => route('reservation.pay', $reservation),
+    ]);
+        }
+
+return redirect()->route('reservation.pay', $reservation);
+        
     }
 
     /**
