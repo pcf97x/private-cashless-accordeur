@@ -1,6 +1,11 @@
 <?php
 
 namespace App\Models;
+use App\Models\Room;
+use App\Models\TimeSlot;
+use App\Models\PricingProfile;
+use App\Models\RoomRate;
+use App\Models\Reservation;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,6 +23,7 @@ class Reservation extends Model
         'phone',
         'price',
         'status',
+        'stripe_session_id',
     ];
     protected $casts = [
         'start_at' => 'datetime',

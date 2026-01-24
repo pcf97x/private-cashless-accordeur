@@ -43,14 +43,12 @@
 
             <div>
                 <label>Profil</label><br>
-                <select name="pricing_profile_id" id="pricing_profile_id">
-                    <option value="">—</option>
-                    @foreach($pricingProfiles as $p)
-                        <option value="{{ $p->id }}" @selected(old('pricing_profile_id')==$p->id)>
-                            {{ $p->name }}
-                        </option>
-                    @endforeach
-                </select>
+              <select name="pricing_profile_id" id="pricing_profile_id">
+    <option value="">—</option>
+    @foreach($pricingProfiles as $p)
+      <option value="{{ $p->id }}">{{ $p->label }}</option>
+    @endforeach
+</select>
             </div>
         </div>
 
@@ -71,10 +69,11 @@
 async function fetchPrice() {
     const timeSlotId = document.getElementById('time_slot_id').value;
     const pricingProfileId = document.getElementById('pricing_profile_id').value;
+    const date = document.querySelector('input[name="date"]').value;
 
     const priceDisplay = document.getElementById('price_display');
 
-    if (!timeSlotId || !pricingProfileId) {
+    if (!timeSlotId || !pricingProfileId || !date) {
         priceDisplay.textContent = '—';
         return;
     }
@@ -84,6 +83,7 @@ async function fetchPrice() {
     formData.append('room_id', '{{ $room->id }}');
     formData.append('time_slot_id', timeSlotId);
     formData.append('pricing_profile_id', pricingProfileId);
+    formData.append('date', date);
 
     try {
         const res = await fetch('{{ route('reservation.price') }}', {
@@ -92,18 +92,16 @@ async function fetchPrice() {
         });
 
         const data = await res.json();
-        if (data.price === null) {
-            priceDisplay.textContent = '—';
-        } else {
-            priceDisplay.textContent = Number(data.price).toFixed(2);
-        }
+        priceDisplay.textContent = data.price ? Number(data.price).toFixed(2) : '—';
     } catch (e) {
         priceDisplay.textContent = '—';
     }
 }
 
-document.getElementById('time_slot_id').addEventListener('change', fetchPrice);
-document.getElementById('pricing_profile_id').addEventListener('change', fetchPrice);
-document.addEventListener('DOMContentLoaded', fetchPrice);
+['time_slot_id','pricing_profile_id'].forEach(id =>
+    document.getElementById(id).addEventListener('change', fetchPrice)
+);
+document.querySelector('input[name="date"]').addEventListener('change', fetchPrice);
 </script>
+
 @endsection

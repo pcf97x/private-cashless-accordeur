@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Models\PricingProfile;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomRate;
@@ -13,41 +15,85 @@ use Stripe\Checkout\Session as StripeSession;
 
 class ReservationController extends Controller
 {
-    public function index()
-    {
-        $rooms = Room::where('active', true)->orderBy('id')->get();
-        return view('reservation.index', compact('rooms'));
-    }
 
-    public function show(Room $room)
-    {
-        $timeSlots = TimeSlot::where('active', 1)->orderBy('order_index')->get();
-        $pricingProfiles = \App\Models\PricingProfile::where('active', 1)->get();
+public function index()
+{
+    $rooms = Room::where('active', true)->orderBy('name')->get();
+    return view('reservation.index', compact('rooms'));
+}
+public function show(Room $room)
+{
+    $timeSlots = TimeSlot::where('active', true)->orderBy('order_index')->get();
+    $pricingProfiles = PricingProfile::where('active', true)->orderBy('id')->get();
+    $user = auth()->user();
 
-        $user = auth()->user();
+    return view('reservation.show', [
+        'room' => $room,
+        'timeSlots' => $timeSlots,
 
-        return view('reservation.show', compact('room', 'timeSlots', 'pricingProfiles', 'user'));
-    }
+        // garde-fous: certains de tes blades utilisent $profiles, d’autres $pricingProfiles
+        'profiles' => $pricingProfiles,
+        'pricingProfiles' => $pricingProfiles,
 
-    public function calculatePrice(Request $request)
+        // garde-fou: certains blades utilisent $user
+        'user' => $user,
+    ]);
+}
+
+
+    /**
+     * AJAX: renvoie prix + dispo
+     */
+    public function checkAvailability(Request $request)
     {
         $request->validate([
             'room_id' => 'required|exists:rooms,id',
             'time_slot_id' => 'required|exists:time_slots,id',
             'pricing_profile_id' => 'required|exists:pricing_profiles,id',
+            'date' => 'required|date',
         ]);
 
-        $rate = RoomRate::where([
-            'room_id' => $request->room_id,
-            'time_slot_id' => $request->time_slot_id,
-            'pricing_profile_id' => $request->pricing_profile_id,
-        ])->first();
+        $date = Carbon::parse($request->date)->toDateString();
 
-        return response()->json([
-            'price' => $rate ? (float) $rate->price : null,
-        ]);
+        // Anti-conflit : on bloque si pending OU paid
+        $exists = Reservation::where('room_id', $request->room_id)
+            ->where('time_slot_id', $request->time_slot_id)
+            ->whereDate('date', $date)
+            ->whereIn('status', ['pending', 'paid'])
+            ->exists();
+
+        if ($exists) {
+             return response()->json([
+        'available' => false,
+        'price' => null,
+        'message' => 'Créneau déjà réservé',
+    ]);
+        }
+
+        
+        $rate = RoomRate::where('room_id', $request->room_id)
+        ->where('time_slot_id', $request->time_slot_id)
+        ->where('pricing_profile_id', $request->pricing_profile_id)
+        ->first();
+
+   
+
+        if (!$rate) {
+            return response()->json([
+                'available' => true,
+                'price' => null,
+                'message' => 'Aucun tarif trouvé pour cette combinaison',
+            ]);
+        }
+
+      return response()->json([
+        'price' => $rate?->price
+    ]);
     }
 
+    /**
+     * Crée la réservation en pending, puis redirige vers /reservation/{id}/pay
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -55,60 +101,46 @@ class ReservationController extends Controller
             'time_slot_id' => 'required|exists:time_slots,id',
             'pricing_profile_id' => 'required|exists:pricing_profiles,id',
             'date' => 'required|date',
-            'name' => 'required|string',
-            'email' => 'required|email',
-            'phone' => 'required|string',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:50',
         ]);
 
-        $slot = TimeSlot::findOrFail($request->time_slot_id);
+        $date = Carbon::parse($request->date)->startOfDay();
 
-        $start = Carbon::parse($request->date . ' ' . $slot->start_time);
-        $end   = Carbon::parse($request->date . ' ' . $slot->end_time);
-
-        // Prix
-        $rate = RoomRate::where([
-            'room_id' => $request->room_id,
-            'time_slot_id' => $request->time_slot_id,
-            'pricing_profile_id' => $request->pricing_profile_id,
-        ])->first();
-
-        if (!$rate) {
-            return back()
-                ->withInput()
-                ->withErrors(['price' => "Aucun tarif trouvé pour cette combinaison"]);
-        }
-
-        /**
-         * Anti-conflit:
-         * - bloque les réservations payées
-         * - bloque aussi les pending récentes (15 minutes) pour éviter double paiement
-         */
-        $pendingCutoff = now()->subMinutes(15);
-
-        $conflict = Reservation::where('room_id', $request->room_id)
-            ->where(function ($q) use ($pendingCutoff) {
-                $q->where('status', 'paid')
-                  ->orWhere(function ($q2) use ($pendingCutoff) {
-                      $q2->where('status', 'pending')
-                         ->where('created_at', '>=', $pendingCutoff);
-                  });
-            })
-            ->where('start_at', '<', $end)
-            ->where('end_at', '>', $start)
+        // Anti-conflit
+        $exists = Reservation::where('room_id', $request->room_id)
+            ->where('time_slot_id', $request->time_slot_id)
+            ->whereDate('date', $date->toDateString())
+            ->whereIn('status', ['pending', 'paid'])
             ->exists();
 
-        if ($conflict) {
-            return back()->withErrors(['slot' => 'Créneau déjà réservé'])->withInput();
+        if ($exists) {
+            return back()->withInput()->withErrors(['date' => 'Créneau déjà réservé']);
         }
 
-        // Create reservation (pending)
+        // Prix
+        $rate = RoomRate::where('room_id', $request->room_id)
+            ->where('time_slot_id', $request->time_slot_id)
+            ->where('pricing_profile_id', $request->pricing_profile_id)
+            ->first();
+
+        if (!$rate) {
+            return back()->withInput()->withErrors(['price' => 'Aucun tarif trouvé pour cette combinaison']);
+        }
+
+        $timeSlot = TimeSlot::findOrFail($request->time_slot_id);
+
+        $startAt = $date->copy()->setTimeFromTimeString($timeSlot->start_time);
+        $endAt   = $date->copy()->setTimeFromTimeString($timeSlot->end_time);
+
         $reservation = Reservation::create([
             'room_id' => $request->room_id,
             'time_slot_id' => $request->time_slot_id,
             'pricing_profile_id' => $request->pricing_profile_id,
-            'date' => Carbon::parse($request->date)->startOfDay(),
-            'start_at' => $start,
-            'end_at' => $end,
+            'date' => $date->toDateString(),
+            'start_at' => $startAt,
+            'end_at' => $endAt,
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
@@ -116,37 +148,34 @@ class ReservationController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()
-            ->route('reservation.pay', ['reservation' => $reservation->id]);
+        return redirect()->route('reservation.pay', $reservation);
     }
 
+    /**
+     * Crée la Checkout Session et redirige Stripe
+     */
     public function pay(Reservation $reservation)
     {
-        // Déjà payé => on ne repaie pas
         if ($reservation->status === 'paid') {
-            return redirect()->route('reservation.success', ['reservation' => $reservation->id]);
+            return redirect()->route('reservation.success', $reservation);
         }
 
         Stripe::setApiKey(config('services.stripe.secret'));
 
         $session = StripeSession::create([
             'mode' => 'payment',
-            'payment_method_types' => ['card'],
             'customer_email' => $reservation->email,
             'line_items' => [[
                 'quantity' => 1,
                 'price_data' => [
                     'currency' => 'eur',
-                    'unit_amount' => (int) round(((float) $reservation->price) * 100),
+                    'unit_amount' => (int) round($reservation->price * 100),
                     'product_data' => [
                         'name' => 'Réservation salle',
                         'description' => "Salle #{$reservation->room_id} - {$reservation->start_at} → {$reservation->end_at}",
                     ],
                 ],
             ]],
-            'metadata' => [
-                'reservation_id' => (string) $reservation->id,
-            ],
             'success_url' => route('reservation.success', ['reservation' => $reservation->id]) . '?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url'  => route('reservation.cancel', ['reservation' => $reservation->id]),
         ]);
@@ -155,28 +184,23 @@ class ReservationController extends Controller
             'stripe_session_id' => $session->id,
         ]);
 
-        return redirect()->away($session->url);
+        return redirect($session->url);
     }
 
-    public function success(Request $request, Reservation $reservation)
+    public function success(Reservation $reservation, Request $request)
     {
-        // En local, si webhook pas branché, on peut "finaliser" via session_id
         $sessionId = $request->query('session_id');
 
-        if ($sessionId && $reservation->status !== 'paid') {
+        // Sécurité : si on a un session_id, on vérifie chez Stripe
+        if ($sessionId) {
             Stripe::setApiKey(config('services.stripe.secret'));
+            $session = StripeSession::retrieve($sessionId);
 
-            try {
-                $session = StripeSession::retrieve($sessionId);
-
-                if (($session->payment_status ?? null) === 'paid') {
-                    $reservation->update([
-                        'status' => 'paid',
-                        'stripe_session_id' => $session->id,
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                // on ne bloque pas l’affichage
+            if ($session && $session->payment_status === 'paid') {
+                $reservation->update([
+                    'status' => 'paid',
+                    'stripe_session_id' => $session->id,
+                ]);
             }
         }
 
@@ -185,9 +209,7 @@ class ReservationController extends Controller
 
     public function cancel(Reservation $reservation)
     {
-        // Option: tu peux mettre canceled ici si tu veux
-        // $reservation->update(['status' => 'canceled']);
-
+        // Option: tu peux mettre cancelled ici si tu veux.
         return view('reservation.cancel', compact('reservation'));
     }
 }

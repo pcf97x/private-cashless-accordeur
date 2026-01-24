@@ -98,9 +98,12 @@ use App\Http\Controllers\ReservationController;
 
 
 Route::get('/reservation', [ReservationController::class, 'index'])->name('reservation.index');
+
 Route::get('/reservation/{room}', [ReservationController::class, 'show'])->name('reservation.show');
 
 Route::post('/reservation/price', [ReservationController::class, 'calculatePrice'])->name('reservation.price');
+Route::post('/reservation/price', [ReservationController::class, 'checkAvailability'])
+    ->name('reservation.price');
 Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
 
 Route::get('/reservation/{reservation}/pay', [ReservationController::class, 'pay'])->name('reservation.pay');
@@ -113,11 +116,12 @@ Route::get('/reservation/cancel/{reservation}', [ReservationController::class, '
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 /**
-Route::post('/reservation/calculate-price', [ReservationController::class, 'calculatePrice'])
-    ->name('reservation.calculatePrice');
+* Route::post('/reservation/calculate-price', [ReservationController::class, 'calculatePrice'])
+*   ->name('reservation.calculatePrice');
  */
 Route::post('/reservation/check-availability', [ReservationController::class, 'checkAvailability'])
     ->name('reservation.checkAvailability');
+
 
 
 
@@ -126,7 +130,6 @@ Route::post('/payment-intent', [ReservationController::class, 'createPaymentInte
     ->name('payment.intent');
 
  
-
 
 
 
