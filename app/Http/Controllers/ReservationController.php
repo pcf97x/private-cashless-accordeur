@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
+use Illuminate\Support\Facades\DB;
 
 class ReservationController extends Controller
 {
@@ -94,29 +95,34 @@ public function show(Room $room)
     /**
      * Crée la réservation en pending, puis redirige vers /reservation/{id}/pay
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'room_id' => 'required|exists:rooms,id',
-            'time_slot_id' => 'required|exists:time_slots,id',
-            'pricing_profile_id' => 'required|exists:pricing_profiles,id',
-            'date' => 'required|date',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:50',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'room_id' => 'required|exists:rooms,id',
+        'time_slot_id' => 'required|exists:time_slots,id',
+        'pricing_profile_id' => 'required|exists:pricing_profiles,id',
+        'date' => 'required|date',
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255',
+        'phone' => 'required|string|max:50',
+    ]);
+
+    return DB::transaction(function () use ($request) {
 
         $date = Carbon::parse($request->date)->startOfDay();
 
-        // Anti-conflit
+        // 🔐 Anti-conflit TOTAL (pending + paid)
         $exists = Reservation::where('room_id', $request->room_id)
             ->where('time_slot_id', $request->time_slot_id)
             ->whereDate('date', $date->toDateString())
             ->whereIn('status', ['pending', 'paid'])
+            ->lockForUpdate()
             ->exists();
 
         if ($exists) {
-            return back()->withInput()->withErrors(['date' => 'Créneau déjà réservé']);
+            return back()
+                ->withInput()
+                ->withErrors(['date' => 'Créneau déjà réservé']);
         }
 
         // Prix
@@ -126,7 +132,9 @@ public function show(Room $room)
             ->first();
 
         if (!$rate) {
-            return back()->withInput()->withErrors(['price' => 'Aucun tarif trouvé pour cette combinaison']);
+            return back()
+                ->withInput()
+                ->withErrors(['price' => 'Aucun tarif trouvé']);
         }
 
         $timeSlot = TimeSlot::findOrFail($request->time_slot_id);
@@ -148,15 +156,16 @@ public function show(Room $room)
             'status' => 'pending',
         ]);
 
-        if ($request->wantsJson()) {
+       if ($request->expectsJson()) {
     return response()->json([
         'checkout_url' => route('reservation.pay', $reservation),
     ]);
-        }
+}
 
 return redirect()->route('reservation.pay', $reservation);
-        
-    }
+    });
+}
+
 
     /**
      * Crée la Checkout Session et redirige Stripe

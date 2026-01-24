@@ -60,7 +60,7 @@
             <input type="text" name="name" placeholder="Nom" value="{{ old('name', $user?->name) }}">
             <input type="email" name="email" placeholder="Email" value="{{ old('email', $user?->email) }}">
             <input type="text" name="phone" placeholder="Téléphone" value="{{ old('phone') }}">
-            <button  type="button" id="reserveBtn">Réserver</button>
+           <button type="submit" id="reserveBtn">Réserver</button>
             
         </div>
     </form>
@@ -111,10 +111,13 @@ document.querySelector('input[name="date"]').addEventListener('change', fetchPri
 document.getElementById('reserveBtn').addEventListener('click', async () => {
     const btn = document.getElementById('reserveBtn');
     const loader = document.getElementById('loading');
-
+    
+    if (btn.dataset.locked) return;
+    btn.dataset.locked = "1";
     btn.disabled = true;
+    btn.innerText = 'Paiement en cours…';
     loader.style.display = 'inline';
-
+  
     const form = btn.closest('form');
     const formData = new FormData(form);
 
