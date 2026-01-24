@@ -67,5 +67,67 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
 });
 
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::resource('rooms', RoomController::class);
+    Route::resource('time-slots', TimeSlotController::class);
+    Route::resource('rates', RoomRateController::class);
+
+    Route::get('reservations', [ReservationAdminController::class, 'index'])
+        ->name('reservations.index');
+});
+
+use App\Http\Controllers\Admin\TimeSlotController;
+
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('time-slots', TimeSlotController::class)->except(['show']);
+});
+use App\Http\Controllers\Admin\RoomRateController;
+
+Route::get('admin/rates', [RoomRateController::class, 'index'])->name('admin.rates.index');
+Route::post('admin/rates', [RoomRateController::class, 'store'])->name('admin.rates.store');
+
+
+use App\Http\Controllers\ReservationController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+
+Route::get('/reservation', [ReservationController::class, 'index'])->name('reservation.index');
+Route::get('/reservation/{room}', [ReservationController::class, 'show'])->name('reservation.show');
+
+Route::post('/reservation/price', [ReservationController::class, 'calculatePrice'])->name('reservation.price');
+Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
+
+Route::get('/reservation/{reservation}/pay', [ReservationController::class, 'pay'])->name('reservation.pay');
+Route::get('/reservation/success/{reservation}', [ReservationController::class, 'success'])->name('reservation.success');
+Route::get('/reservation/cancel/{reservation}', [ReservationController::class, 'cancel'])->name('reservation.cancel');
+
+/**
+ * Stripe Webhook (optionnel en local, utile en prod)
+ */
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
+
+/**
+Route::post('/reservation/calculate-price', [ReservationController::class, 'calculatePrice'])
+    ->name('reservation.calculatePrice');
+ */
+Route::post('/reservation/check-availability', [ReservationController::class, 'checkAvailability'])
+    ->name('reservation.checkAvailability');
+
+
+
+
+Route::post('/payment-intent', [ReservationController::class, 'createPaymentIntent'])
+    ->name('payment.intent');
+
+ 
+
+
+
 
 require __DIR__.'/auth.php';

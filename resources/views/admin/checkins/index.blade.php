@@ -18,19 +18,26 @@
             </tr>
         </thead>
         <tbody>
-        @if($scans->count())    
-	@forelse ($scans as $row)
+
+            @forelse ($scans as $row)
                 <tr>
                     <td>{{ $row->lastname ?? '—' }}</td>
                     <td>{{ $row->firstname ?? '—' }}</td>
                     <td>{{ $row->company ?? '—' }}</td>
                     <td>{{ $row->purpose ?? '—' }}</td>
+
                     <td>
-                        {{ $row->entry_at ? \Carbon\Carbon::parse($row->entry_at)->format('H:i') : '—' }}
+                        {{ $row->entry_at
+                            ? \Carbon\Carbon::parse($row->entry_at)->format('H:i')
+                            : '—' }}
                     </td>
+
                     <td>
-                        {{ $row->exit_at ? \Carbon\Carbon::parse($row->exit_at)->format('H:i') : '—' }}
+                        {{ $row->exit_at
+                            ? \Carbon\Carbon::parse($row->exit_at)->format('H:i')
+                            : '—' }}
                     </td>
+
                     <td>
                         @if($row->entry_at && !$row->exit_at)
                             🟢 Présent
@@ -40,31 +47,23 @@
                             ⏳ En attente
                         @endif
                     </td>
+
                     <td>
-    <a href="{{ route('checkins.edit', $row->weez_ticket_code) }}"
-       class="btn btn-sm btn-outline-primary">
-        ✏️ Compléter
-    </a>
-</td>
+                        <a href="{{ route('checkins.edit', $row->weez_ticket_code) }}"
+                           class="btn btn-sm btn-outline-primary">
+                            ✏️ Compléter
+                        </a>
+                    </td>
                 </tr>
+
             @empty
                 <tr>
-                    <td colspan="7" class="text-center">Aucun scan</td>
-                    <td>
-    <a href="{{ route('checkins.edit', $row->weez_ticket_code) }}"
-       class="btn btn-sm btn-outline-primary">
-        ✏️ Compléter
-    </a>
-</td>
+                    <td colspan="8" class="text-center text-muted">
+                        Aucun scan enregistré
+                    </td>
                 </tr>
             @endforelse
-@else
-    <tr>
-        <td colspan="7" class="text-center text-muted">
-            Aucun pointage enregistré
-        </td>
-    </tr>
-@endif
+
         </tbody>
     </table>
 </div>

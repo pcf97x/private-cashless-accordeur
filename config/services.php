@@ -35,6 +35,12 @@ return [
         ],
     ],
 
+    'stripe' => [
+    'key' => env('STRIPE_KEY'),
+    'secret' => env('STRIPE_SECRET'),
+    'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
     'weezevent' => [
         'api_key' => env('WEEZEVENT_API_KEY'),
         'access_token' => env('WEEZEVENT_ACCESS_TOKEN'),
