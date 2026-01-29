@@ -4,6 +4,7 @@
 <div style="padding:20px;">
     <h2>{{ $room->name }}</h2>
 
+
     @if(session('success'))
         <p style="color:green;">{{ session('success') }}</p>
     @endif

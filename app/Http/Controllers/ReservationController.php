@@ -13,7 +13,9 @@ use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ReservationConfirmed;
+use App\Mail\ReservationAdminNotification;
 class ReservationController extends Controller
 {
 
@@ -212,12 +214,28 @@ return redirect()->route('reservation.pay', $reservation);
             Stripe::setApiKey(config('services.stripe.secret'));
             $session = StripeSession::retrieve($sessionId);
 
-            if ($session && $session->payment_status === 'paid') {
+           if ($session && $session->payment_status === 'paid') {
+
+            if ($reservation->status !== 'paid') {
                 $reservation->update([
                     'status' => 'paid',
                     'stripe_session_id' => $session->id,
                 ]);
+                  $reservation->load('room');
+
+
+                // 📧 ENVOI EMAIL (une seule fois)
+                Mail::to($reservation->email)
+                    ->send(new ReservationConfirmed($reservation));
+                Mail::to(config('mail.from.address'))
+                    ->send(new ReservationAdminNotification($reservation));
+
+
             }
+            }
+
+            
+
         }
 
         return view('reservation.success', compact('reservation'));

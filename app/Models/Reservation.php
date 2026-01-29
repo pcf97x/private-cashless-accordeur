@@ -30,4 +30,21 @@ class Reservation extends Model
         'end_at'   => 'datetime',
         'date'     => 'date',
     ];
+    
+    
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+        public function timeSlot()
+    {
+        return $this->belongsTo(TimeSlot::class);
+    }
+
+    public function pricingProfile()
+    {
+        return $this->belongsTo(PricingProfile::class);
+    }
 }
+

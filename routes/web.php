@@ -4,8 +4,15 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\AccessController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\admin\ContactController;
+use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\ReservationAdminController;
+use App\Http\Controllers\Admin\RoomController;
+use App\Http\Controllers\Admin\TimeSlotController;
+use App\Http\Controllers\Admin\RoomRateController;
+use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\StripeWebhookController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -77,18 +84,16 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         ->name('reservations.index');
 });
 
-use App\Http\Controllers\Admin\TimeSlotController;
+
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('time-slots', TimeSlotController::class)->except(['show']);
 });
-use App\Http\Controllers\Admin\RoomRateController;
+
 
 Route::get('admin/rates', [RoomRateController::class, 'index'])->name('admin.rates.index');
 Route::post('admin/rates', [RoomRateController::class, 'store'])->name('admin.rates.store');
 
-
-use App\Http\Controllers\ReservationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -129,8 +134,28 @@ Route::post('/reservation/check-availability', [ReservationController::class, 'c
 Route::post('/payment-intent', [ReservationController::class, 'createPaymentIntent'])
     ->name('payment.intent');
 
- 
 
+Route::prefix('admin')
+    ->middleware(['auth'])
+    ->name('admin.')
+    ->group(function () {
 
+        Route::get('/reservations', [ReservationAdminController::class, 'index'])
+            ->name('reservations.index');
+
+        Route::get('/reservations/{reservation}', [ReservationAdminController::class, 'show'])
+            ->name('reservations.show');
+
+        // ✅ ICI LA ROUTE MANQUANTE
+        Route::post(
+            '/reservations/{reservation}/resend-email',
+            [ReservationAdminController::class, 'resendEmail']
+        )->name('reservations.resendEmail');
+
+    });
+Route::post(
+    '/admin/reservations/{reservation}/cancel',
+    [\App\Http\Controllers\Admin\ReservationAdminController::class, 'cancelAndRefund']
+)->name('admin.reservations.cancel');
 
 require __DIR__.'/auth.php';
