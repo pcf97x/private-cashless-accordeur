@@ -3,63 +3,96 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Room;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $rooms = Room::orderBy('name')->get();
+        return view('admin.rooms.index', compact('rooms'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('admin.rooms.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'capacity'    => 'required|integer|min:1',
+            'surface_m2'  => 'nullable|numeric|min:0',
+            'equipments'  => 'nullable|string',
+            'description' => 'nullable|string',
+            'location'    => 'nullable|string|max:255',
+            'image'       => 'nullable|image|max:2048',
+        ]);
+
+        $data = [
+            'name'        => $request->name,
+            'capacity'    => $request->capacity,
+            'surface_m2'  => $request->surface_m2,
+            'equipments'  => $request->equipments,
+            'description' => $request->description,
+            'location'    => $request->location,
+            'active'      => $request->boolean('active', true),
+        ];
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('rooms', 'public');
+        }
+
+        Room::create($data);
+
+        return redirect()->route('admin.rooms.index')
+            ->with('success', 'Salle créée avec succès.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit(Room $room)
     {
-        //
+        return view('admin.rooms.edit', compact('room'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, Room $room)
     {
-        //
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'capacity'    => 'required|integer|min:1',
+            'surface_m2'  => 'nullable|numeric|min:0',
+            'equipments'  => 'nullable|string',
+            'description' => 'nullable|string',
+            'location'    => 'nullable|string|max:255',
+            'image'       => 'nullable|image|max:2048',
+        ]);
+
+        $data = [
+            'name'        => $request->name,
+            'capacity'    => $request->capacity,
+            'surface_m2'  => $request->surface_m2,
+            'equipments'  => $request->equipments,
+            'description' => $request->description,
+            'location'    => $request->location,
+            'active'      => $request->boolean('active'),
+        ];
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('rooms', 'public');
+        }
+
+        $room->update($data);
+
+        return redirect()->route('admin.rooms.index')
+            ->with('success', 'Salle mise à jour.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy(Room $room)
     {
-        //
-    }
+        $room->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return redirect()->route('admin.rooms.index')
+            ->with('success', 'Salle supprimée.');
     }
 }

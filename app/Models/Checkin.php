@@ -12,6 +12,7 @@ class Checkin extends Model
     protected $table = 'checkins';
 
     protected $fillable = [
+        'contact_id',
         'firstname',
         'lastname',
         'company',
