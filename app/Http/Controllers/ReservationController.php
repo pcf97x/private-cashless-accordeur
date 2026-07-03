@@ -18,6 +18,7 @@ use App\Mail\ReservationConfirmed;
 use App\Mail\ReservationAdminNotification;
 use App\Models\Contact;
 use App\Models\Checkin;
+use App\Services\WeezeventParticipantService;
 use Illuminate\Support\Str;
 class ReservationController extends Controller
 {
@@ -250,8 +251,8 @@ return redirect()->route('reservation.pay', $reservation);
                     'lastname' => $contact->lastname ?: $lastname,
                 ]);
 
-                // Créer un checkin avec QR code
-                Checkin::create([
+                // Créer un checkin avec QR code + Weezevent
+                $checkin = Checkin::create([
                     'contact_id' => $contact->id,
                     'firstname' => $firstname,
                     'lastname' => $lastname,
@@ -259,6 +260,27 @@ return redirect()->route('reservation.pay', $reservation);
                     'purpose' => 'Réservation ' . $reservation->room->name,
                     'qr_token' => (string) Str::uuid(),
                 ]);
+
+                // Création participant Weezevent pour le barcode
+                try {
+                    $weezevent = app(WeezeventParticipantService::class);
+                    $response = $weezevent->createParticipant([
+                        'firstname' => $firstname,
+                        'lastname' => $lastname,
+                        'email' => $reservation->email,
+                    ]);
+
+                    $participant = $response['participants'][0] ?? null;
+                    if ($participant) {
+                        $checkin->update([
+                            'weez_participant_id' => $participant['id_participant'] ?? null,
+                            'weez_ticket_code' => $participant['barcode_id'] ?? null,
+                            'weez_event_id' => $participant['id_evenement'] ?? null,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    // Weezevent peut échouer, on continue
+                }
 
                 // Envoi emails
                 Mail::to($reservation->email)
