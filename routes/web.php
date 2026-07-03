@@ -12,11 +12,14 @@ use App\Http\Controllers\Admin\TimeSlotController;
 use App\Http\Controllers\Admin\RoomRateController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\PublicController;
 
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [PublicController::class, 'home'])->name('home');
+Route::get('/espaces', [PublicController::class, 'espaces'])->name('espaces');
+Route::get('/planning', [PublicController::class, 'planning'])->name('planning');
+Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
+Route::post('/contact', [PublicController::class, 'contactStore'])->name('contact.store');
 
 Route::get('/acces', [AccessController::class, 'create']);
 Route::post('/acces', [AccessController::class, 'store']);

@@ -30,16 +30,20 @@ public function show(Room $room)
     $pricingProfiles = PricingProfile::where('active', true)->orderBy('id')->get();
     $user = auth()->user();
 
+    // Réservations existantes pour cette salle (pour le calendrier interactif)
+    $reservations = Reservation::where('room_id', $room->id)
+        ->where('date', '>=', now()->startOfMonth())
+        ->whereIn('status', ['pending', 'paid'])
+        ->with('timeSlot')
+        ->get();
+
     return view('reservation.show', [
         'room' => $room,
         'timeSlots' => $timeSlots,
-
-        // garde-fous: certains de tes blades utilisent $profiles, d’autres $pricingProfiles
         'profiles' => $pricingProfiles,
         'pricingProfiles' => $pricingProfiles,
-
-        // garde-fou: certains blades utilisent $user
         'user' => $user,
+        'reservations' => $reservations,
     ]);
 }
 

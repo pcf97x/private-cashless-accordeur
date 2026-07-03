@@ -1,21 +1,9 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Réserver une salle — L'Accordeur</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800&family=plus-jakarta-sans:500,600,700,800&display=swap" rel="stylesheet" />
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="font-sans antialiased bg-gray-50/50 min-h-screen">
+@extends('layouts.public')
 
-    <header class="bg-white border-b border-gray-100 sticky top-0 z-10 backdrop-blur-lg bg-white/80">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/"><img src="{{ asset('images/logo-couleur.png') }}" alt="L'Accordeur" class="h-9"></a>
-            <a href="/acces" class="btn-outline !py-2 !px-4 !text-xs">Accès visiteur</a>
-        </div>
-    </header>
+@section('title', 'Réserver une salle — L\'Accordeur')
+@section('meta_description', 'Réservez une salle de réunion ou un espace événementiel à L\'Accordeur, Cayenne. Paiement en ligne sécurisé.')
+
+@section('content')
 
     <main class="max-w-6xl mx-auto px-6 py-10">
 
@@ -90,10 +78,4 @@
 
     </main>
 
-    <footer class="text-center text-xs text-gray-400 py-8 border-t border-gray-100 mt-12">
-        <p>&copy; {{ date('Y') }} L'Accordeur &mdash; Pôle Associatif de Guyane</p>
-        <p class="mt-1">1, rue Roland BARRAT &mdash; 97300 Cayenne</p>
-    </footer>
-
-</body>
-</html>
+@endsection
