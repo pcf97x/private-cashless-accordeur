@@ -60,7 +60,7 @@
                             Planning
                         </a>
                         <a href="/acces" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-accordeur-600 rounded-lg hover:bg-accordeur-50 transition-colors duration-200">
-                            Accès
+                            Pass Visiteur
                         </a>
                         <a href="/contact" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-accordeur-600 rounded-lg hover:bg-accordeur-50 transition-colors duration-200">
                             Contact
@@ -116,7 +116,7 @@
                             Planning
                         </a>
                         <a href="/acces" class="block px-4 py-3 text-base font-medium text-gray-700 hover:text-accordeur-600 hover:bg-accordeur-50 rounded-xl transition-colors">
-                            Accès
+                            Pass Visiteur
                         </a>
                         <a href="/contact" class="block px-4 py-3 text-base font-medium text-gray-700 hover:text-accordeur-600 hover:bg-accordeur-50 rounded-xl transition-colors">
                             Contact
