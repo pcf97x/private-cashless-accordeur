@@ -207,7 +207,11 @@
                     <div class="p-4 space-y-3">
                         @foreach($timeSlots as $slot)
                             <button
-                                @click="selectSlot({{ $slot->id }}, '{{ $slot->label }}', '{{ $slot->start_time }}', '{{ $slot->end_time }}')"
+                                data-slot-id="{{ $slot->id }}"
+                                data-slot-label="{{ $slot->label }}"
+                                data-slot-start="{{ $slot->start_time }}"
+                                data-slot-end="{{ $slot->end_time }}"
+                                @click="selectSlot(Number($el.dataset.slotId), $el.dataset.slotLabel, $el.dataset.slotStart, $el.dataset.slotEnd)"
                                 :disabled="isSlotBooked({{ $slot->id }})"
                                 :class="{
                                     'border-accordeur-500 bg-accordeur-50 ring-2 ring-accordeur-500/20': selectedSlotId === {{ $slot->id }},
