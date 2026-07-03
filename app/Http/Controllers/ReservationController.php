@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ReservationConfirmed;
 use App\Mail\ReservationAdminNotification;
+use App\Models\Contact;
+use App\Models\Checkin;
+use Illuminate\Support\Str;
 class ReservationController extends Controller
 {
 
@@ -225,16 +228,43 @@ return redirect()->route('reservation.pay', $reservation);
                     'status' => 'paid',
                     'stripe_session_id' => $session->id,
                 ]);
-                  $reservation->load('room');
+                $reservation->load('room');
 
+                // Créer/mettre à jour le contact
+                $nameParts = explode(' ', $reservation->name, 2);
+                $firstname = $nameParts[0];
+                $lastname = $nameParts[1] ?? '';
 
-                // 📧 ENVOI EMAIL (une seule fois)
+                $contact = Contact::firstOrCreate(
+                    ['email' => $reservation->email],
+                    [
+                        'firstname' => $firstname,
+                        'lastname' => $lastname,
+                        'phone' => $reservation->phone,
+                    ]
+                );
+
+                $contact->update([
+                    'phone' => $reservation->phone ?: $contact->phone,
+                    'firstname' => $contact->firstname ?: $firstname,
+                    'lastname' => $contact->lastname ?: $lastname,
+                ]);
+
+                // Créer un checkin avec QR code
+                Checkin::create([
+                    'contact_id' => $contact->id,
+                    'firstname' => $firstname,
+                    'lastname' => $lastname,
+                    'email' => $reservation->email,
+                    'purpose' => 'Réservation ' . $reservation->room->name,
+                    'qr_token' => (string) Str::uuid(),
+                ]);
+
+                // Envoi emails
                 Mail::to($reservation->email)
                     ->send(new ReservationConfirmed($reservation));
                 Mail::to(config('mail.from.address'))
                     ->send(new ReservationAdminNotification($reservation));
-
-
             }
             }
 
