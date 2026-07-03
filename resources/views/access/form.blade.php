@@ -1,23 +1,9 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Accès — L'Accordeur</title>
+@extends('layouts.public')
 
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800&family=plus-jakarta-sans:500,600,700,800&display=swap" rel="stylesheet" />
+@section('title', 'Accès — L\'Accordeur')
+@section('meta_description', 'Enregistrez votre visite à L\'Accordeur, Pôle Associatif de Guyane, en quelques secondes.')
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="font-sans antialiased bg-gray-50/50 min-h-screen">
-
-    {{-- Header --}}
-    <header class="bg-white border-b border-gray-100">
-        <div class="max-w-2xl mx-auto px-6 py-5 flex items-center justify-center">
-            <img src="{{ asset('images/logo-couleur.png') }}" alt="L'Accordeur" class="h-10">
-        </div>
-    </header>
+@section('content')
 
     <main class="max-w-lg mx-auto px-6 py-10">
 
@@ -77,12 +63,6 @@
             </form>
         </div>
 
-        {{-- Footer --}}
-        <p class="text-center text-xs text-gray-400 mt-8">
-            L'Accordeur &mdash; Pôle Associatif de Guyane
-        </p>
-
     </main>
 
-</body>
-</html>
+@endsection
