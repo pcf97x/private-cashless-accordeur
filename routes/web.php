@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\RoomRateController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\Admin\UserController;
 
 
 Route::get('/', [PublicController::class, 'home'])->name('home');
@@ -91,6 +92,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('time-slots', TimeSlotController::class)->except(['show']);
+});
+
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('users', UserController::class)->except(['show']);
 });
 
 
