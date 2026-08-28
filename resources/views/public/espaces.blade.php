@@ -323,7 +323,7 @@
             </div>
 
             {{-- Bureaux associatifs --}}
-            <div id="bureaux" class="card group p-0 overflow-hidden hover:-translate-y-1 scroll-mt-32"
+            <a href="{{ route('ecosysteme') }}" id="bureaux" class="card group p-0 overflow-hidden hover:-translate-y-1 scroll-mt-32 block cursor-pointer"
                  x-data="{ show: false }" x-intersect="show = true"
                  :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                  style="transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;">
@@ -344,9 +344,13 @@
                             <span class="badge-info text-xs">Meubl&eacute;s</span>
                             <span class="badge-info text-xs">&Eacute;quip&eacute;s</span>
                         </div>
+                        <div class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accordeur-600 group-hover:text-accordeur-700">
+                            D&eacute;couvrir l'&eacute;cosyst&egrave;me
+                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
 
             {{-- Numlab --}}
             <div id="numlab" class="card group p-0 overflow-hidden hover:-translate-y-1 scroll-mt-32"
@@ -375,7 +379,7 @@
             </div>
 
             {{-- Studio Podcast --}}
-            <div id="studio" class="card group p-0 overflow-hidden hover:-translate-y-1 scroll-mt-32"
+            <a href="https://podkaz.studio/" target="_blank" rel="noopener" id="studio" class="card group p-0 overflow-hidden hover:-translate-y-1 scroll-mt-32 block cursor-pointer"
                  x-data="{ show: false }" x-intersect="show = true"
                  :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                  style="transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;">
@@ -396,9 +400,13 @@
                             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-pink-50 text-pink-700 text-xs font-semibold ring-1 ring-pink-500/10">&Eacute;quipement pro</span>
                             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-pink-50 text-pink-700 text-xs font-semibold ring-1 ring-pink-500/10">Production audio</span>
                         </div>
+                        <div class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-pink-600 group-hover:text-pink-700">
+                            Visiter podkaz.studio
+                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 </section>

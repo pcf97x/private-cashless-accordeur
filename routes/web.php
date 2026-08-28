@@ -14,10 +14,14 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\EcosystemPartnerController;
+use App\Http\Controllers\Admin\PricingProfileController;
+use App\Http\Controllers\Admin\ReservationOptionController;
 
 
 Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::get('/espaces', [PublicController::class, 'espaces'])->name('espaces');
+Route::get('/ecosysteme', [PublicController::class, 'ecosysteme'])->name('ecosysteme');
 Route::get('/planning', [PublicController::class, 'planning'])->name('planning');
 Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
 Route::post('/contact', [PublicController::class, 'contactStore'])->name('contact.store');
@@ -96,6 +100,12 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', UserController::class)->except(['show']);
+});
+
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('ecosystem', EcosystemPartnerController::class)->except(['show']);
+    Route::resource('pricing-profiles', PricingProfileController::class)->except(['show']);
+    Route::resource('options', ReservationOptionController::class)->except(['show']);
 });
 
 

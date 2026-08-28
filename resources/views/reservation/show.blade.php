@@ -194,53 +194,6 @@
                     </div>
                 </div>
 
-                {{-- ============================== --}}
-                {{-- TIME SLOTS (shown after date)  --}}
-                {{-- ============================== --}}
-                <div x-show="selectedDate" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="card overflow-hidden">
-                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-100">
-                        <h3 class="font-display font-bold text-gray-900 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-accordeur-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Créneaux du <span class="text-accordeur-600" x-text="formattedSelectedDate"></span>
-                        </h3>
-                    </div>
-                    <div class="p-4 space-y-3">
-                        @foreach($timeSlots as $slot)
-                            <button
-                                data-slot-id="{{ $slot->id }}"
-                                data-slot-label="{{ $slot->label }}"
-                                data-slot-start="{{ $slot->start_time }}"
-                                data-slot-end="{{ $slot->end_time }}"
-                                @click="selectSlot(Number($el.dataset.slotId), $el.dataset.slotLabel, $el.dataset.slotStart, $el.dataset.slotEnd)"
-                                :disabled="isSlotBooked({{ $slot->id }})"
-                                :class="{
-                                    'border-accordeur-500 bg-accordeur-50 ring-2 ring-accordeur-500/20': selectedSlotId === {{ $slot->id }},
-                                    'border-gray-200 hover:border-accordeur-300 hover:bg-accordeur-50/30': selectedSlotId !== {{ $slot->id }} && !isSlotBooked({{ $slot->id }}),
-                                    'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed': isSlotBooked({{ $slot->id }}),
-                                }"
-                                class="w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200"
-                            >
-                                <div class="flex items-center gap-4">
-                                    <div :class="selectedSlotId === {{ $slot->id }} ? 'bg-accordeur-500 text-white' : (isSlotBooked({{ $slot->id }}) ? 'bg-gray-200 text-gray-400' : 'bg-accordeur-50 text-accordeur-600')" class="w-11 h-11 rounded-xl flex items-center justify-center transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="font-semibold text-gray-900">{{ $slot->label }}</p>
-                                        <p class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($slot->start_time)->format('H\\hi') }} — {{ \Carbon\Carbon::parse($slot->end_time)->format('H\\hi') }}</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <template x-if="isSlotBooked({{ $slot->id }})">
-                                        <span class="badge-danger text-xs">Réservé</span>
-                                    </template>
-                                    <template x-if="!isSlotBooked({{ $slot->id }})">
-                                        <span class="badge-success text-xs">Disponible</span>
-                                    </template>
-                                </div>
-                            </button>
-                        @endforeach
-                    </div>
-                </div>
             </div>
 
             {{-- ============================== --}}
@@ -302,12 +255,50 @@
                             </div>
                         </div>
 
+                        {{-- Options --}}
+                        @if($options->count())
+                        <div x-show="price !== null" x-transition class="mt-5">
+                            <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-accordeur-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                                Options
+                            </h4>
+                            <div class="space-y-2">
+                                @foreach($options as $opt)
+                                <label class="flex items-center justify-between p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer"
+                                       :class="(optionQuantities[{{ $opt->id }}] || 0) > 0 ? 'border-accordeur-300 bg-accordeur-50/50' : 'border-gray-200 hover:border-accordeur-200'">
+                                    <div class="flex items-center gap-3 flex-1">
+                                        <input type="checkbox"
+                                               :checked="(optionQuantities[{{ $opt->id }}] || 0) > 0"
+                                               @change="toggleOption({{ $opt->id }}, {{ $opt->price }})"
+                                               class="rounded border-gray-300 text-accordeur-500 focus:ring-accordeur-500">
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-900">{{ $opt->name }}</p>
+                                            @if($opt->description)
+                                                <p class="text-xs text-gray-500">{{ $opt->description }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <div x-show="(optionQuantities[{{ $opt->id }}] || 0) > 0" class="flex items-center gap-1">
+                                            <button type="button" @click.prevent="changeQty({{ $opt->id }}, {{ $opt->price }}, -1)" class="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600">-</button>
+                                            <span class="text-sm font-bold text-gray-700 w-6 text-center" x-text="optionQuantities[{{ $opt->id }}] || 0"></span>
+                                            <button type="button" @click.prevent="changeQty({{ $opt->id }}, {{ $opt->price }}, 1)" class="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600">+</button>
+                                        </div>
+                                        <span class="text-sm font-bold text-accordeur-600 whitespace-nowrap">{{ number_format($opt->price, 2) }} &euro;</span>
+                                    </div>
+                                </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
                         {{-- Price display --}}
                         <div x-show="price !== null" x-transition class="mt-5 bg-gradient-to-r from-accordeur-500 to-accordeur-600 rounded-xl p-4 text-center">
-                            <p class="text-accordeur-100 text-xs font-semibold uppercase tracking-wider">Prix du créneau</p>
+                            <p class="text-accordeur-100 text-xs font-semibold uppercase tracking-wider">Prix total</p>
                             <p class="text-3xl font-display font-extrabold text-white mt-1">
-                                <span x-text="price ? Number(price).toFixed(2) : '—'"></span> &euro;
+                                <span x-text="totalPrice.toFixed(2)"></span> &euro;
                             </p>
+                            <p x-show="optionsTotal > 0" class="text-accordeur-200 text-xs mt-1" x-text="'Créneau ' + Number(price).toFixed(2) + ' € + Options ' + optionsTotal.toFixed(2) + ' €'"></p>
                         </div>
                     </div>
 
@@ -324,6 +315,13 @@
                             <input type="hidden" name="date" :value="selectedDate">
                             <input type="hidden" name="time_slot_id" :value="selectedSlotId">
                             <input type="hidden" name="pricing_profile_id" :value="selectedProfileId">
+
+                            {{-- Options hidden fields --}}
+                            <template x-for="(qty, optId) in optionQuantities" :key="optId">
+                                <template x-if="qty > 0">
+                                    <input type="hidden" :name="'options[' + optId + ']'" :value="qty">
+                                </template>
+                            </template>
 
                             <div>
                                 <label for="name" class="form-label">Nom complet</label>
@@ -371,6 +369,54 @@
                         </p>
                     </div>
 
+                    {{-- ============================== --}}
+                    {{-- TIME SLOTS (shown after date)  --}}
+                    {{-- ============================== --}}
+                    <div x-show="selectedDate" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="card overflow-hidden">
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100">
+                            <h3 class="font-display font-bold text-gray-900 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-accordeur-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Créneaux du <span class="text-accordeur-600" x-text="formattedSelectedDate"></span>
+                            </h3>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            @foreach($timeSlots as $slot)
+                                <button
+                                    data-slot-id="{{ $slot->id }}"
+                                    data-slot-label="{{ $slot->label }}"
+                                    data-slot-start="{{ $slot->start_time }}"
+                                    data-slot-end="{{ $slot->end_time }}"
+                                    @click="selectSlot(Number($el.dataset.slotId), $el.dataset.slotLabel, $el.dataset.slotStart, $el.dataset.slotEnd)"
+                                    :disabled="isSlotBooked({{ $slot->id }})"
+                                    :class="{
+                                        'border-accordeur-500 bg-accordeur-50 ring-2 ring-accordeur-500/20': selectedSlotId === {{ $slot->id }},
+                                        'border-gray-200 hover:border-accordeur-300 hover:bg-accordeur-50/30': selectedSlotId !== {{ $slot->id }} && !isSlotBooked({{ $slot->id }}),
+                                        'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed': isSlotBooked({{ $slot->id }}),
+                                    }"
+                                    class="w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200"
+                                >
+                                    <div class="flex items-center gap-4">
+                                        <div :class="selectedSlotId === {{ $slot->id }} ? 'bg-accordeur-500 text-white' : (isSlotBooked({{ $slot->id }}) ? 'bg-gray-200 text-gray-400' : 'bg-accordeur-50 text-accordeur-600')" class="w-11 h-11 rounded-xl flex items-center justify-center transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </div>
+                                        <div class="text-left">
+                                            <p class="font-semibold text-gray-900">{{ $slot->label }}</p>
+                                            <p class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($slot->start_time)->format('H\\hi') }} — {{ \Carbon\Carbon::parse($slot->end_time)->format('H\\hi') }}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <template x-if="isSlotBooked({{ $slot->id }})">
+                                            <span class="badge-danger text-xs">Réservé</span>
+                                        </template>
+                                        <template x-if="!isSlotBooked({{ $slot->id }})">
+                                            <span class="badge-success text-xs">Disponible</span>
+                                        </template>
+                                    </div>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -397,6 +443,8 @@ function reservationCalendar() {
         selectedSlotLabel: '',
         selectedProfileId: '',
         price: null,
+        optionQuantities: {},
+        optionPrices: {},
         submitting: false,
         reservations: reservationsRaw,
 
@@ -409,6 +457,20 @@ function reservationCalendar() {
             if (this.selectedSlotId && this.selectedDate) return 2;
             if (this.selectedDate) return 1;
             return 0;
+        },
+
+        get optionsTotal() {
+            let total = 0;
+            for (const [id, qty] of Object.entries(this.optionQuantities)) {
+                if (qty > 0 && this.optionPrices[id]) {
+                    total += this.optionPrices[id] * qty;
+                }
+            }
+            return total;
+        },
+
+        get totalPrice() {
+            return (this.price ? Number(this.price) : 0) + this.optionsTotal;
         },
 
         get canSubmit() {
@@ -536,6 +598,24 @@ function reservationCalendar() {
             this.selectedSlotLabel = label;
             this.selectedProfileId = '';
             this.price = null;
+            this.optionQuantities = {};
+            this.optionPrices = {};
+        },
+
+        toggleOption(optionId, optionPrice) {
+            if (this.optionQuantities[optionId] > 0) {
+                this.optionQuantities[optionId] = 0;
+            } else {
+                this.optionQuantities[optionId] = 1;
+                this.optionPrices[optionId] = optionPrice;
+            }
+        },
+
+        changeQty(optionId, optionPrice, delta) {
+            const current = this.optionQuantities[optionId] || 0;
+            const newQty = Math.max(0, current + delta);
+            this.optionQuantities[optionId] = newQty;
+            this.optionPrices[optionId] = optionPrice;
         },
 
         async fetchPrice() {

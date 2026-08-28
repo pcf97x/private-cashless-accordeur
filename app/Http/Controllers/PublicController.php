@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Reservation;
 use App\Models\TimeSlot;
+use App\Models\EcosystemPartner;
 use Illuminate\Http\Request;
 
 class PublicController extends Controller
@@ -30,6 +31,12 @@ class PublicController extends Controller
         $timeSlots = TimeSlot::where('active', true)->orderBy('order_index')->get();
 
         return view('public.planning', compact('rooms', 'reservations', 'timeSlots'));
+    }
+
+    public function ecosysteme()
+    {
+        $partners = EcosystemPartner::where('active', true)->orderBy('sort_order')->orderBy('name')->get();
+        return view('public.ecosysteme', compact('partners'));
     }
 
     public function contact()

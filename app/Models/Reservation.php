@@ -46,5 +46,12 @@ class Reservation extends Model
     {
         return $this->belongsTo(PricingProfile::class);
     }
+
+    public function options()
+    {
+        return $this->belongsToMany(ReservationOption::class)
+            ->withPivot('quantity', 'unit_price')
+            ->withTimestamps();
+    }
 }
 

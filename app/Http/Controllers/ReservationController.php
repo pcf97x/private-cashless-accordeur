@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PricingProfile;
 use App\Models\Reservation;
+use App\Models\ReservationOption;
 use App\Models\Room;
 use App\Models\RoomRate;
 use App\Models\TimeSlot;
@@ -41,6 +42,8 @@ public function show(Room $room)
         ->with('timeSlot')
         ->get();
 
+    $options = ReservationOption::where('active', true)->orderBy('sort_order')->orderBy('name')->get();
+
     return view('reservation.show', [
         'room' => $room,
         'timeSlots' => $timeSlots,
@@ -48,6 +51,7 @@ public function show(Room $room)
         'pricingProfiles' => $pricingProfiles,
         'user' => $user,
         'reservations' => $reservations,
+        'options' => $options,
     ]);
 }
 
@@ -152,6 +156,26 @@ public function store(Request $request)
         $startAt = $date->copy()->setTimeFromTimeString($timeSlot->start_time);
         $endAt   = $date->copy()->setTimeFromTimeString($timeSlot->end_time);
 
+        // Calcul du prix total avec options
+        $totalPrice = $rate->price;
+        $selectedOptions = [];
+
+        if ($request->has('options')) {
+            foreach ($request->options as $optionId => $qty) {
+                $qty = (int) $qty;
+                if ($qty > 0) {
+                    $option = ReservationOption::find($optionId);
+                    if ($option && $option->active) {
+                        $selectedOptions[$optionId] = [
+                            'quantity' => $qty,
+                            'unit_price' => $option->price,
+                        ];
+                        $totalPrice += $option->price * $qty;
+                    }
+                }
+            }
+        }
+
         $reservation = Reservation::create([
             'room_id' => $request->room_id,
             'time_slot_id' => $request->time_slot_id,
@@ -162,9 +186,13 @@ public function store(Request $request)
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'price' => $rate->price,
+            'price' => $totalPrice,
             'status' => 'pending',
         ]);
+
+        if (!empty($selectedOptions)) {
+            $reservation->options()->attach($selectedOptions);
+        }
 
        if ($request->expectsJson()) {
     return response()->json([

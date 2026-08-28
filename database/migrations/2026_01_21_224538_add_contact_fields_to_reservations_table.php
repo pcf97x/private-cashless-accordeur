@@ -8,9 +8,15 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('reservations', function (Blueprint $table) {
-            $table->string('name')->after('end_at');
-            $table->string('email')->after('name');
-            $table->string('phone')->after('email');
+            if (!Schema::hasColumn('reservations', 'name')) {
+                $table->string('name')->after('end_at');
+            }
+            if (!Schema::hasColumn('reservations', 'email')) {
+                $table->string('email')->after('name');
+            }
+            if (!Schema::hasColumn('reservations', 'phone')) {
+                $table->string('phone')->after('email');
+            }
         });
     }
 

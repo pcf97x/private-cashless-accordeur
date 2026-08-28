@@ -4,15 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PricingProfile extends Model
+class ReservationOption extends Model
 {
     protected $fillable = [
-        'code',
-        'label',
+        'name',
+        'description',
+        'price',
         'active',
+        'sort_order',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'price' => 'decimal:2',
     ];
 }

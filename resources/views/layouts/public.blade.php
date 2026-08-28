@@ -56,6 +56,9 @@
                         <a href="/espaces" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-accordeur-600 rounded-lg hover:bg-accordeur-50 transition-colors duration-200">
                             Nos Espaces
                         </a>
+                        <a href="/ecosysteme" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-accordeur-600 rounded-lg hover:bg-accordeur-50 transition-colors duration-200">
+                            Écosystème
+                        </a>
                         <a href="/planning" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-accordeur-600 rounded-lg hover:bg-accordeur-50 transition-colors duration-200">
                             Planning
                         </a>
@@ -111,6 +114,9 @@
                         </a>
                         <a href="/espaces" class="block px-4 py-3 text-base font-medium text-gray-700 hover:text-accordeur-600 hover:bg-accordeur-50 rounded-xl transition-colors">
                             Nos Espaces
+                        </a>
+                        <a href="/ecosysteme" class="block px-4 py-3 text-base font-medium text-gray-700 hover:text-accordeur-600 hover:bg-accordeur-50 rounded-xl transition-colors">
+                            Écosystème
                         </a>
                         <a href="/planning" class="block px-4 py-3 text-base font-medium text-gray-700 hover:text-accordeur-600 hover:bg-accordeur-50 rounded-xl transition-colors">
                             Planning
