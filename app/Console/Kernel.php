@@ -17,6 +17,11 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/weezevent-sync.log'));
+
+        // Fermer automatiquement les pointages sans sortie à 19h
+        $schedule->command('checkins:close --hour=19')
+            ->dailyAt('19:00')
+            ->appendOutputTo(storage_path('logs/checkins-close.log'));
     }
 
     /**
