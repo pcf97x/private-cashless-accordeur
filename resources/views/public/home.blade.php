@@ -18,6 +18,14 @@
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
         <div class="text-center max-w-4xl mx-auto">
+            {{-- Logo --}}
+            <div class="mb-8"
+                 x-data="{ show: false }" x-intersect="show = true"
+                 :class="show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+                 style="transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);">
+                <img src="{{ asset('images/logo-couleur.png') }}" alt="L'Accordeur" class="h-16 lg:h-20 mx-auto">
+            </div>
+
             {{-- Badge --}}
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-accordeur-100 shadow-sm mb-8"
                  x-data="{ show: false }" x-intersect="show = true"

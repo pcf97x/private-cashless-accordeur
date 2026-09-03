@@ -45,7 +45,7 @@
 
                     {{-- Logo --}}
                     <a href="/" class="shrink-0">
-                        <img src="{{ asset('images/logo-couleur.png') }}" alt="L'Accordeur" class="h-10">
+                        <img src="{{ asset('images/logo-couleur.png') }}" alt="L'Accordeur" class="h-10 lg:h-12">
                     </a>
 
                     {{-- Desktop navigation --}}
