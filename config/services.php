@@ -46,6 +46,8 @@ return [
         'access_token' => env('WEEZEVENT_ACCESS_TOKEN'),
         'event_id' => env('WEEZEVENT_EVENT_ID'),
         'ticket_id' => env('WEEZEVENT_TICKET_ID'),
+        'username' => env('WEEZEVENT_USERNAME'),
+        'password' => env('WEEZEVENT_PASSWORD'),
     ],
 
 ];
