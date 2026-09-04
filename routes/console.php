@@ -8,9 +8,9 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Sync Weezevent checkins toutes les 5 minutes
+// Sync Weezevent checkins chaque minute
 Schedule::command('sync:weezevent-checkins')
-    ->everyFiveMinutes()
+    ->everyMinute()
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/weezevent-sync.log'));
