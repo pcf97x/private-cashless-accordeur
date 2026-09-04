@@ -10,7 +10,7 @@ class CheckinController extends Controller
 {
     public function index()
     {
-        $checkins = Checkin::orderByDesc('created_at')->get();
+        $checkins = Checkin::orderByDesc('scan_date')->orderByDesc('created_at')->get();
 
         return view('admin.checkins.index', [
             'checkins' => $checkins,

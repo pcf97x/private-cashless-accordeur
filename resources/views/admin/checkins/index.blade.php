@@ -63,14 +63,31 @@
         const form = document.getElementById('scanForm');
         let timer = null;
 
-        // Auto-submit quand le champ reçoit un code assez long (douchette colle tout d'un coup)
-        input.addEventListener('input', function() {
+        function tryAutoSubmit() {
             clearTimeout(timer);
             const val = input.value.trim();
             if (val.length >= 8) {
                 timer = setTimeout(function() {
-                    form.submit();
-                }, 500);
+                    if (input.value.trim().length >= 8) {
+                        form.submit();
+                    }
+                }, 600);
+            }
+        }
+
+        // Écouter tous les types d'input possibles (douchettes, collage, frappe)
+        input.addEventListener('input', tryAutoSubmit);
+        input.addEventListener('keyup', tryAutoSubmit);
+        input.addEventListener('paste', function() {
+            setTimeout(tryAutoSubmit, 100);
+        });
+
+        // Si la douchette envoie Enter à la fin, le formulaire se soumet nativement (submit button)
+        // Mais on s'assure aussi via keydown
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && input.value.trim().length >= 1) {
+                e.preventDefault();
+                form.submit();
             }
         });
 
@@ -84,18 +101,25 @@
         <table>
             <thead>
                 <tr>
+                    <th>Date pointage</th>
                     <th>Visiteur</th>
                     <th>Motif</th>
                     <th>Code Weezevent</th>
                     <th>Entrée</th>
                     <th>Sortie</th>
                     <th>Statut</th>
-                    <th>Date</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($checkins as $checkin)
                     <tr>
+                        <td class="text-sm font-medium text-gray-900 whitespace-nowrap">
+                            @if($checkin->scan_date)
+                                {{ \Carbon\Carbon::parse($checkin->scan_date)->format('d/m/Y') }}
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
                         <td>
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-lg bg-accordeur-50 flex items-center justify-center text-accordeur-600 text-xs font-bold shrink-0">
@@ -151,13 +175,10 @@
                                 <span class="badge badge-warning">En attente</span>
                             @endif
                         </td>
-                        <td class="text-sm text-gray-500">
-                            {{ $checkin->created_at?->format('d/m/Y H:i') ?? '—' }}
-                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-gray-400 py-12">
+                        <td colspan="8" class="text-center text-gray-400 py-12">
                             <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
                             Aucun pass enregistré
                         </td>
