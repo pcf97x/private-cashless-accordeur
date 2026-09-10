@@ -26,9 +26,11 @@ class WeezeventParticipantService
             'notify' => false
         ];
 
-        $response = Http::asForm()               // 👈 IMPORTANT
-            ->withoutVerifying()                // DEV WAMP
-            ->post($url, [
+        $httpClient = Http::asForm();
+        if (!app()->isProduction()) {
+            $httpClient = $httpClient->withoutVerifying();
+        }
+        $response = $httpClient->post($url, [
                 'api_key' => config('services.weezevent.api_key'),
                 'data'    => json_encode($payload), // 👈 EXACTEMENT COMME POSTMAN
             ]);

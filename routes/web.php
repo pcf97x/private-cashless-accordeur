@@ -18,6 +18,11 @@ use App\Http\Controllers\Admin\EcosystemPartnerController;
 use App\Http\Controllers\Admin\PricingProfileController;
 use App\Http\Controllers\Admin\ReservationOptionController;
 
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::get('/espaces', [PublicController::class, 'espaces'])->name('espaces');
@@ -29,151 +34,83 @@ Route::post('/contact', [PublicController::class, 'contactStore'])->name('contac
 Route::get('/acces', [AccessController::class, 'create']);
 Route::post('/acces', [AccessController::class, 'store']);
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| Reservation (public)
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('dashboard');
+Route::get('/reservation', [ReservationController::class, 'index'])->name('reservation.index');
+Route::get('/reservation/{room}', [ReservationController::class, 'show'])->name('reservation.show');
+Route::post('/reservation/price', [ReservationController::class, 'checkAvailability'])->name('reservation.price');
+Route::post('/reservation/check-availability', [ReservationController::class, 'checkAvailability'])->name('reservation.checkAvailability');
+Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
+Route::get('/reservation/{reservation}/pay', [ReservationController::class, 'pay'])->name('reservation.pay');
+Route::get('/reservation/success/{reservation}', [ReservationController::class, 'success'])->name('reservation.success');
+Route::get('/reservation/cancel/{reservation}', [ReservationController::class, 'cancel'])->name('reservation.cancel');
 
-Route::middleware(['auth'])->get('/dashboard', [DashboardController::class, 'index'])
-    ->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| Stripe Webhook (CSRF exempt via bootstrap/app.php)
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| Auth Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
-
-Route::middleware(['auth'])->group(function () {
-   Route::get('/admin/checkins', [CheckinController::class, 'index'])
-    ->name('checkins.index');
-   Route::get('/admin/checkins/scan/{token}', [CheckinController::class, 'scan'])
-    ->name('admin.checkins.scan');
-});
-
-
-
-
-Route::middleware(['auth'])->post(
-    '/admin/checkins/scan-weez',
-    [CheckinController::class, 'scanWeezevent']
-)->name('checkins.scan.weez');
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/admin/checkins/{code}/edit', [CheckinController::class, 'edit'])
-        ->name('checkins.edit');
-
-    Route::post('/admin/checkins/{code}', [CheckinController::class, 'update'])
-        ->name('checkins.update');
-});
-
-Route::middleware(['auth'])->get(
-    '/admin/contacts',
-    [\App\Http\Controllers\admin\ContactController::class, 'index']
-)->name('admin.contacts.index');
-
-
-
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
-    Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
-});
-
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-
-    Route::resource('rooms', RoomController::class);
-    Route::resource('time-slots', TimeSlotController::class);
-    Route::resource('rates', RoomRateController::class);
-
-    Route::get('reservations', [ReservationAdminController::class, 'index'])
-        ->name('reservations.index');
-});
-
-
-
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('time-slots', TimeSlotController::class)->except(['show']);
-});
-
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('users', UserController::class)->except(['show']);
-});
-
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('ecosystem', EcosystemPartnerController::class)->except(['show']);
-    Route::resource('pricing-profiles', PricingProfileController::class)->except(['show']);
-    Route::resource('options', ReservationOptionController::class)->except(['show']);
-});
-
-
-Route::get('admin/rates', [RoomRateController::class, 'index'])->name('admin.rates.index');
-Route::post('admin/rates', [RoomRateController::class, 'store'])->name('admin.rates.store');
-
-
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Admin Routes
 |--------------------------------------------------------------------------
 */
 
+Route::middleware(['auth'])->group(function () {
+    // Checkins / Pointage
+    Route::get('/admin/checkins', [CheckinController::class, 'index'])->name('checkins.index');
+    Route::get('/admin/checkins/scan/{token}', [CheckinController::class, 'scan'])->name('admin.checkins.scan');
+    Route::post('/admin/checkins/scan-weez', [CheckinController::class, 'scanWeezevent'])->name('checkins.scan.weez');
+    Route::get('/admin/checkins/{code}/edit', [CheckinController::class, 'edit'])->name('checkins.edit');
+    Route::post('/admin/checkins/{code}', [CheckinController::class, 'update'])->name('checkins.update');
+});
 
-Route::get('/reservation', [ReservationController::class, 'index'])->name('reservation.index');
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    // Contacts
+    Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
 
-Route::get('/reservation/{room}', [ReservationController::class, 'show'])->name('reservation.show');
+    // Salles, Créneaux, Tarifs
+    Route::resource('rooms', RoomController::class);
+    Route::resource('time-slots', TimeSlotController::class)->except(['show']);
+    Route::resource('rates', RoomRateController::class);
 
-Route::post('/reservation/price', [ReservationController::class, 'calculatePrice'])->name('reservation.price');
-Route::post('/reservation/price', [ReservationController::class, 'checkAvailability'])
-    ->name('reservation.price');
-Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
+    // Reservations
+    Route::get('/reservations', [ReservationAdminController::class, 'index'])->name('reservations.index');
+    Route::get('/reservations/{reservation}', [ReservationAdminController::class, 'show'])->name('reservations.show');
+    Route::post('/reservations/{reservation}/resend-email', [ReservationAdminController::class, 'resendEmail'])->name('reservations.resendEmail');
+    Route::post('/reservations/{reservation}/cancel', [ReservationAdminController::class, 'cancelAndRefund'])->name('reservations.cancel');
 
-Route::get('/reservation/{reservation}/pay', [ReservationController::class, 'pay'])->name('reservation.pay');
-Route::get('/reservation/success/{reservation}', [ReservationController::class, 'success'])->name('reservation.success');
-Route::get('/reservation/cancel/{reservation}', [ReservationController::class, 'cancel'])->name('reservation.cancel');
+    // Profils tarifaires, Options, Ecosystème
+    Route::resource('pricing-profiles', PricingProfileController::class)->except(['show']);
+    Route::resource('options', ReservationOptionController::class)->except(['show']);
+    Route::resource('ecosystem', EcosystemPartnerController::class)->except(['show']);
+});
 
-/**
- * Stripe Webhook (optionnel en local, utile en prod)
- */
-Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
-
-/**
-* Route::post('/reservation/calculate-price', [ReservationController::class, 'calculatePrice'])
-*   ->name('reservation.calculatePrice');
- */
-Route::post('/reservation/check-availability', [ReservationController::class, 'checkAvailability'])
-    ->name('reservation.checkAvailability');
-
-
-
-
-
-Route::post('/payment-intent', [ReservationController::class, 'createPaymentIntent'])
-    ->name('payment.intent');
-
-
-Route::prefix('admin')
-    ->middleware(['auth'])
-    ->name('admin.')
-    ->group(function () {
-
-        Route::get('/reservations', [ReservationAdminController::class, 'index'])
-            ->name('reservations.index');
-
-        Route::get('/reservations/{reservation}', [ReservationAdminController::class, 'show'])
-            ->name('reservations.show');
-
-        // ✅ ICI LA ROUTE MANQUANTE
-        Route::post(
-            '/reservations/{reservation}/resend-email',
-            [ReservationAdminController::class, 'resendEmail']
-        )->name('reservations.resendEmail');
-
-    });
-Route::post(
-    '/admin/reservations/{reservation}/cancel',
-    [\App\Http\Controllers\Admin\ReservationAdminController::class, 'cancelAndRefund']
-)->name('admin.reservations.cancel');
+// Utilisateurs (admin uniquement)
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('users', UserController::class)->except(['show']);
+});
 
 require __DIR__.'/auth.php';

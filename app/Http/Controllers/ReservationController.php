@@ -219,6 +219,9 @@ return redirect()->route('reservation.pay', $reservation);
         $session = StripeSession::create([
             'mode' => 'payment',
             'customer_email' => $reservation->email,
+            'metadata' => [
+                'reservation_id' => $reservation->id,
+            ],
             'line_items' => [[
                 'quantity' => 1,
                 'price_data' => [

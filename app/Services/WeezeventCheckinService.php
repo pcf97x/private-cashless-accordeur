@@ -11,7 +11,7 @@ class WeezeventCheckinService
     {
         // Cache le token 1h (Weezevent tokens durent longtemps mais on rafraîchit régulièrement)
         return Cache::remember('weezevent_access_token', 3600, function () {
-            $response = Http::withOptions(['verify' => false])
+            $response = Http::withOptions(['verify' => app()->isProduction()])
                 ->asForm()
                 ->post('https://api.weezevent.com/auth/access_token', [
                     'username' => config('services.weezevent.username'),
@@ -33,7 +33,7 @@ class WeezeventCheckinService
         $token = $this->getAccessToken();
 
         $response = Http::withOptions([
-            'verify' => false
+            'verify' => app()->isProduction(),
         ])->get("https://api.weezevent.com/v3/evenement/{$eventId}/participants", [
             'api_key' => config('services.weezevent.api_key'),
             'access_token' => $token,
@@ -46,7 +46,7 @@ class WeezeventCheckinService
             $token = $this->getAccessToken();
 
             $response = Http::withOptions([
-                'verify' => false
+                'verify' => app()->isProduction(),
             ])->get("https://api.weezevent.com/v3/evenement/{$eventId}/participants", [
                 'api_key' => config('services.weezevent.api_key'),
                 'access_token' => $token,
