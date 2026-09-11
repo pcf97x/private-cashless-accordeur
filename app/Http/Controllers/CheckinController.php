@@ -18,6 +18,60 @@ class CheckinController extends Controller
     }
 
     /**
+     * Crée une nouvelle entrée à partir d'un checkin existant
+     */
+    private function createNewEntry(Checkin $original): Checkin
+    {
+        return Checkin::create([
+            'contact_id' => $original->contact_id,
+            'firstname' => $original->firstname,
+            'lastname' => $original->lastname,
+            'company' => $original->company,
+            'email' => $original->email,
+            'purpose' => $original->purpose,
+            'qr_token' => $original->qr_token,
+            'weez_ticket_code' => $original->weez_ticket_code,
+            'weez_event_id' => $original->weez_event_id,
+            'weez_participant_id' => $original->weez_participant_id,
+            'entry_at' => now(),
+            'scan_date' => now(),
+        ]);
+    }
+
+    /**
+     * Logique commune : scan 1 = entrée, scan 2 = sortie, scan 3 = nouvelle entrée, etc.
+     */
+    private function handleScan(Checkin $originalCheckin): array
+    {
+        $name = trim(($originalCheckin->firstname ?? '') . ' ' . ($originalCheckin->lastname ?? ''));
+        $today = now()->toDateString();
+        $code = $originalCheckin->weez_ticket_code ?? $originalCheckin->qr_token;
+
+        // Chercher le DERNIER pointage du jour pour ce code
+        $lastToday = Checkin::where(function ($q) use ($code) {
+                $q->where('weez_ticket_code', $code)->orWhere('qr_token', $code);
+            })
+            ->whereDate('scan_date', $today)
+            ->orderByDesc('id')
+            ->first();
+
+        // Pas de pointage aujourd'hui OU le dernier est déjà sorti → nouvelle entrée
+        if (!$lastToday || $lastToday->exit_at !== null) {
+            if (is_null($originalCheckin->entry_at) && is_null($originalCheckin->scan_date)) {
+                // Tout premier scan ever → utiliser le record original
+                $originalCheckin->update(['entry_at' => now(), 'scan_date' => now()]);
+            } else {
+                $this->createNewEntry($originalCheckin);
+            }
+            return ['type' => 'success', 'message' => 'Entrée enregistrée pour ' . $name];
+        }
+
+        // Le dernier pointage est ouvert → enregistrer la sortie
+        $lastToday->update(['exit_at' => now()]);
+        return ['type' => 'success', 'message' => 'Sortie enregistrée pour ' . $name . ' à ' . now()->format('H:i')];
+    }
+
+    /**
      * Scan d'un QR code via URL (par qr_token ou weez_ticket_code)
      */
     public function scan(string $token)
@@ -31,47 +85,12 @@ class CheckinController extends Controller
                 ->with('error', 'Aucun pass trouvé pour le code : ' . $token);
         }
 
-        $name = trim(($originalCheckin->firstname ?? '') . ' ' . ($originalCheckin->lastname ?? ''));
-        $today = now()->toDateString();
-
-        $todayCheckin = Checkin::where(function ($q) use ($token) {
-                $q->where('weez_ticket_code', $token)->orWhere('qr_token', $token);
-            })
-            ->whereDate('scan_date', $today)
-            ->first();
-
-        if (!$todayCheckin) {
-            if (is_null($originalCheckin->entry_at) && is_null($originalCheckin->scan_date)) {
-                $originalCheckin->update(['entry_at' => now(), 'scan_date' => now()]);
-            } else {
-                Checkin::create([
-                    'contact_id' => $originalCheckin->contact_id,
-                    'firstname' => $originalCheckin->firstname,
-                    'lastname' => $originalCheckin->lastname,
-                    'company' => $originalCheckin->company,
-                    'email' => $originalCheckin->email,
-                    'purpose' => $originalCheckin->purpose,
-                    'qr_token' => $originalCheckin->qr_token,
-                    'weez_ticket_code' => $originalCheckin->weez_ticket_code,
-                    'weez_event_id' => $originalCheckin->weez_event_id,
-                    'weez_participant_id' => $originalCheckin->weez_participant_id,
-                    'entry_at' => now(),
-                    'scan_date' => now(),
-                ]);
-            }
-            return redirect()->route('checkins.index')
-                ->with('success', 'Entrée enregistrée pour ' . $name);
-        }
-
-        // Scan suivant → met à jour la sortie
-        $todayCheckin->update(['exit_at' => now()]);
-        return redirect()->route('checkins.index')
-            ->with('success', 'Sortie mise à jour pour ' . $name . ' à ' . now()->format('H:i'));
+        $result = $this->handleScan($originalCheckin);
+        return redirect()->route('checkins.index')->with($result['type'], $result['message']);
     }
 
     /**
      * Scan via code Weezevent (POST depuis formulaire de scan)
-     * Règle : premier scan du jour = entrée, chaque scan suivant = met à jour la sortie
      */
     public function scanWeezevent(Request $request)
     {
@@ -81,7 +100,6 @@ class CheckinController extends Controller
 
         $code = trim($request->code);
 
-        // Trouver le pass original (pour les infos du visiteur)
         $originalCheckin = Checkin::where('weez_ticket_code', $code)
             ->orWhere('qr_token', $code)
             ->first();
@@ -91,48 +109,8 @@ class CheckinController extends Controller
                 ->with('error', 'Aucun pass trouvé pour le code : ' . $code);
         }
 
-        $name = trim(($originalCheckin->firstname ?? '') . ' ' . ($originalCheckin->lastname ?? ''));
-        $today = now()->toDateString();
-
-        // Chercher un pointage du jour pour ce code
-        $todayCheckin = Checkin::where(function ($q) use ($code) {
-                $q->where('weez_ticket_code', $code)->orWhere('qr_token', $code);
-            })
-            ->whereDate('scan_date', $today)
-            ->first();
-
-        if (!$todayCheckin) {
-            // Premier scan du jour → Entrée
-            if (is_null($originalCheckin->entry_at) && is_null($originalCheckin->scan_date)) {
-                $originalCheckin->update([
-                    'entry_at' => now(),
-                    'scan_date' => now(),
-                ]);
-            } else {
-                Checkin::create([
-                    'contact_id' => $originalCheckin->contact_id,
-                    'firstname' => $originalCheckin->firstname,
-                    'lastname' => $originalCheckin->lastname,
-                    'company' => $originalCheckin->company,
-                    'email' => $originalCheckin->email,
-                    'purpose' => $originalCheckin->purpose,
-                    'qr_token' => $originalCheckin->qr_token,
-                    'weez_ticket_code' => $originalCheckin->weez_ticket_code,
-                    'weez_event_id' => $originalCheckin->weez_event_id,
-                    'weez_participant_id' => $originalCheckin->weez_participant_id,
-                    'entry_at' => now(),
-                    'scan_date' => now(),
-                ]);
-            }
-
-            return redirect()->route('checkins.index')
-                ->with('success', 'Entrée enregistrée pour ' . $name);
-        }
-
-        // Scan suivant → met à jour l'heure de sortie (le dernier scan de la journée sera la sortie)
-        $todayCheckin->update(['exit_at' => now()]);
-        return redirect()->route('checkins.index')
-            ->with('success', 'Sortie mise à jour pour ' . $name . ' à ' . now()->format('H:i'));
+        $result = $this->handleScan($originalCheckin);
+        return redirect()->route('checkins.index')->with($result['type'], $result['message']);
     }
 
     public function edit(string $code)
