@@ -39,7 +39,7 @@ class CheckinController extends Controller
     }
 
     /**
-     * Logique commune : scan 1 = entrée, scan 2 = sortie, scan 3 = nouvelle entrée, etc.
+     * Logique commune : 1 ligne par jour, premier scan = entrée, dernier scan = sortie
      */
     private function handleScan(Checkin $originalCheckin): array
     {
@@ -47,18 +47,16 @@ class CheckinController extends Controller
         $today = now()->toDateString();
         $code = $originalCheckin->weez_ticket_code ?? $originalCheckin->qr_token;
 
-        // Chercher le DERNIER pointage du jour pour ce code
-        $lastToday = Checkin::where(function ($q) use ($code) {
+        // Chercher le pointage du jour pour ce code
+        $todayCheckin = Checkin::where(function ($q) use ($code) {
                 $q->where('weez_ticket_code', $code)->orWhere('qr_token', $code);
             })
             ->whereDate('scan_date', $today)
-            ->orderByDesc('id')
             ->first();
 
-        // Pas de pointage aujourd'hui OU le dernier est déjà sorti → nouvelle entrée
-        if (!$lastToday || $lastToday->exit_at !== null) {
+        if (!$todayCheckin) {
+            // Pas encore pointé aujourd'hui → Entrée
             if (is_null($originalCheckin->entry_at) && is_null($originalCheckin->scan_date)) {
-                // Tout premier scan ever → utiliser le record original
                 $originalCheckin->update(['entry_at' => now(), 'scan_date' => now()]);
             } else {
                 $this->createNewEntry($originalCheckin);
@@ -66,8 +64,8 @@ class CheckinController extends Controller
             return ['type' => 'success', 'message' => 'Entrée enregistrée pour ' . $name];
         }
 
-        // Le dernier pointage est ouvert → enregistrer la sortie
-        $lastToday->update(['exit_at' => now()]);
+        // Déjà pointé aujourd'hui → mettre à jour la sortie
+        $todayCheckin->update(['exit_at' => now()]);
         return ['type' => 'success', 'message' => 'Sortie enregistrée pour ' . $name . ' à ' . now()->format('H:i')];
     }
 
