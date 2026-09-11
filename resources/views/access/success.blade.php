@@ -26,8 +26,13 @@
                     <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
 
-                <h1 class="text-2xl font-display font-bold text-gray-900 mb-2">Accès validé</h1>
-                <p class="text-gray-500 mb-6">Présentez ce QR code à l'accueil</p>
+                @if(!empty($existing))
+                    <h1 class="text-2xl font-display font-bold text-gray-900 mb-2">Vous avez déjà un pass</h1>
+                    <p class="text-gray-500 mb-6">Votre QR code existant vous a été renvoyé par email. Vous pouvez aussi le présenter ci-dessous.</p>
+                @else
+                    <h1 class="text-2xl font-display font-bold text-gray-900 mb-2">Accès validé</h1>
+                    <p class="text-gray-500 mb-6">Présentez ce QR code à l'accueil</p>
+                @endif
 
                 <div class="inline-block p-4 bg-white rounded-2xl shadow-card border border-gray-100">
                     <img
