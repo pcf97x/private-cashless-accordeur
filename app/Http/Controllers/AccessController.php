@@ -45,9 +45,24 @@ class AccessController extends Controller
                 'lastname'  => $contact->lastname  ?: $request->lastname,
                 'company'   => $request->company ?? $contact->company,
             ]);
+
+            // 2. Vérifier si un pass existe déjà avec un code Weezevent
+            $existingCheckin = Checkin::where('contact_id', $contact->id)
+                ->whereNotNull('weez_ticket_code')
+                ->first();
+
+            if ($existingCheckin) {
+                // Renvoyer le QR code existant par email
+                Mail::to($contact->email)->send(new AccessConfirmed($existingCheckin));
+
+                return view('access.success', [
+                    'barcode' => $existingCheckin->weez_ticket_code,
+                    'existing' => true,
+                ]);
+            }
         }
 
-        // 2. Checkin local
+        // 3. Créer un nouveau Checkin (pas de pass existant)
         $checkin = Checkin::create([
             'contact_id' => $contact?->id,
             'firstname'  => $request->firstname,
@@ -58,7 +73,7 @@ class AccessController extends Controller
             'qr_token'   => (string) Str::uuid(),
         ]);
 
-        // 3. Création Weezevent
+        // 4. Création Weezevent
         try {
             $response = $weezevent->createParticipant([
                 'firstname' => $checkin->firstname,
@@ -76,17 +91,18 @@ class AccessController extends Controller
                 ]);
             }
         } catch (\Exception $e) {
-            // Weezevent peut échouer en local, on continue quand même
+            // Weezevent peut échouer, on continue
         }
 
-        // 4. Envoi email de confirmation avec billet
+        // 5. Envoi email de confirmation avec billet
         if ($checkin->email) {
             Mail::to($checkin->email)->send(new AccessConfirmed($checkin));
         }
 
-        // 5. Retour page succès
+        // 6. Retour page succès
         return view('access.success', [
             'barcode' => $checkin->weez_ticket_code ?? $checkin->qr_token,
+            'existing' => false,
         ]);
     }
 }
