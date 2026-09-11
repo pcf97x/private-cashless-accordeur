@@ -8,12 +8,11 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Sync Weezevent checkins chaque minute
+// Sync Weezevent checkins toutes les 10 secondes
 Schedule::command('sync:weezevent-checkins')
-    ->everyMinute()
+    ->everyTenSeconds()
     ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/weezevent-sync.log'));
+    ->runInBackground();
 
 // Fermer automatiquement les pointages sans sortie à 19h
 Schedule::command('checkins:close --hour=19')
