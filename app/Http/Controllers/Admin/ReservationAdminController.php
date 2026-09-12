@@ -141,34 +141,37 @@ public function resendEmail(Reservation $reservation)
 
 public function cancelAndRefund(Reservation $reservation)
 {
-    // Sécurité
+    // Réservation en attente → annulation simple
+    if ($reservation->status === 'pending') {
+        $reservation->update(['status' => 'cancelled']);
+        return back()->with('success', 'Réservation #' . $reservation->id . ' annulée.');
+    }
+
     if ($reservation->status !== 'paid') {
-        return back()->with('error', 'Cette réservation ne peut pas être remboursée.');
+        return back()->with('error', 'Cette réservation ne peut pas être annulée.');
     }
 
+    // Réservation payée sans Stripe (manuelle) → annulation simple
     if (!$reservation->stripe_session_id) {
-        return back()->with('error', 'Aucune session Stripe associée.');
+        $reservation->update(['status' => 'cancelled']);
+        return back()->with('success', 'Réservation #' . $reservation->id . ' annulée.');
     }
 
+    // Réservation payée via Stripe → annulation + remboursement
     try {
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        // Récupération de la session Stripe
         $session = \Stripe\Checkout\Session::retrieve($reservation->stripe_session_id);
 
         if (!$session->payment_intent) {
             throw new \Exception('PaymentIntent introuvable.');
         }
 
-        // Remboursement
         Refund::create([
             'payment_intent' => $session->payment_intent,
         ]);
 
-        // Update BDD
-        $reservation->update([
-            'status' => 'cancelled',
-        ]);
+        $reservation->update(['status' => 'cancelled']);
 
         return back()->with('success', 'Réservation annulée et remboursée avec succès.');
 

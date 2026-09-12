@@ -26,6 +26,7 @@
                     <th>Email</th>
                     <th class="text-right">Prix</th>
                     <th class="text-center">Statut</th>
+                    <th class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,10 +60,36 @@
                                 <span class="badge badge-warning">En attente</span>
                             @endif
                         </td>
+                        <td>
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{{ route('admin.reservations.show', $r) }}" class="btn-outline !py-1 !px-2.5 !text-xs !rounded-lg">Voir</a>
+                                @if($r->status === 'pending')
+                                    <form method="POST" action="{{ route('admin.reservations.confirmPayment', $r) }}" class="flex items-center gap-1">
+                                        @csrf
+                                        <select name="payment_method" required class="form-input !py-1 !px-2 !text-xs !rounded-lg !w-auto">
+                                            <option value="especes">Especes</option>
+                                            <option value="carte">Carte</option>
+                                            <option value="virement">Virement</option>
+                                            <option value="cheque">Cheque</option>
+                                            <option value="autre">Autre</option>
+                                        </select>
+                                        <button type="submit" class="btn !py-1 !px-2.5 !text-xs !rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200" title="Valider le paiement">
+                                            Valider
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.reservations.cancel', $r) }}" onsubmit="return confirm('Annuler cette réservation ?');">
+                                        @csrf
+                                        <button type="submit" class="btn !py-1 !px-2.5 !text-xs !rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200" title="Annuler">
+                                            Annuler
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center text-gray-400 py-12">
+                        <td colspan="9" class="text-center text-gray-400 py-12">
                             <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             Aucune réservation
                         </td>
