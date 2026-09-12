@@ -90,6 +90,11 @@ class RoomController extends Controller
 
     public function destroy(Room $room)
     {
+        if ($room->reservations()->exists()) {
+            return redirect()->route('admin.rooms.index')
+                ->with('error', 'Impossible de supprimer cette salle : elle a des réservations associées. Désactivez-la plutôt.');
+        }
+
         $room->delete();
 
         return redirect()->route('admin.rooms.index')

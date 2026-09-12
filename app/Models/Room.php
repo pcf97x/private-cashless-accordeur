@@ -26,6 +26,11 @@ class Room extends Model
         return $this->hasMany(RoomRate::class);
     }
 
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
     public function getPriceRangeAttribute(): ?string
     {
         $prices = $this->rates()->pluck('price')->filter(fn($p) => $p > 0);
