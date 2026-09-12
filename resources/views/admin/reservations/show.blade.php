@@ -136,5 +136,134 @@
         </div>
     </div>
 
+    {{-- Supplements --}}
+    @if(in_array($reservation->status, ['paid', 'pending']))
+    <div class="card p-6 mt-6">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 pb-3 mb-4 border-b border-gray-100">Complements / Paiements additionnels</h3>
+
+        {{-- Existing supplements --}}
+        @if($reservation->supplements->count())
+        <div class="space-y-3 mb-6">
+            @foreach($reservation->supplements as $sup)
+            <div class="flex items-center justify-between p-4 rounded-xl border {{ $sup->status === 'paid' ? 'border-emerald-200 bg-emerald-50/30' : ($sup->status === 'cancelled' ? 'border-gray-200 bg-gray-50 opacity-60' : 'border-amber-200 bg-amber-50/30') }}">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold text-gray-900">{{ $sup->label }}</span>
+                        @if($sup->status === 'paid')
+                            <span class="badge badge-success !text-[10px]">Paye</span>
+                        @elseif($sup->status === 'cancelled')
+                            <span class="badge badge-danger !text-[10px]">Annule</span>
+                        @else
+                            <span class="badge badge-warning !text-[10px]">En attente</span>
+                        @endif
+                    </div>
+                    @if($sup->description)
+                        <p class="text-xs text-gray-500 mt-1">{{ $sup->description }}</p>
+                    @endif
+                    @if($sup->payment_method)
+                        <p class="text-xs text-gray-400 mt-1">Regle par : {{ $sup->payment_method }}</p>
+                    @endif
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="font-bold text-accordeur-600 whitespace-nowrap">{{ number_format($sup->amount, 2, ',', ' ') }} &euro;</span>
+
+                    @if($sup->status === 'pending')
+                    <div class="flex items-center gap-1">
+                        @if($sup->token)
+                        <form method="POST" action="{{ route('admin.supplements.resend', $sup) }}">
+                            @csrf
+                            <button type="submit" class="btn !py-1 !px-2 !text-[10px] !rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" title="Renvoyer le lien">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </button>
+                        </form>
+                        @endif
+                        <form method="POST" action="{{ route('admin.supplements.confirm', $sup) }}" class="flex items-center gap-1">
+                            @csrf
+                            <select name="payment_method" required class="form-input !py-1 !px-1.5 !text-[10px] !rounded-lg !w-auto">
+                                <option value="especes">Especes</option>
+                                <option value="carte">Carte</option>
+                                <option value="virement">Virement</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                            <button type="submit" class="btn !py-1 !px-2 !text-[10px] !rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200" title="Valider">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ route('admin.supplements.cancel', $sup) }}" onsubmit="return confirm('Annuler ce complement ?');">
+                            @csrf
+                            <button type="submit" class="btn !py-1 !px-2 !text-[10px] !rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200" title="Annuler">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+
+            {{-- Total supplements --}}
+            @php $paidTotal = $reservation->supplements->where('status', 'paid')->sum('amount'); @endphp
+            @if($paidTotal > 0)
+            <div class="flex justify-between items-center pt-2 border-t border-gray-100 text-sm">
+                <span class="text-gray-500">Total complements payes</span>
+                <span class="font-bold text-accordeur-600">{{ number_format($paidTotal, 2, ',', ' ') }} &euro;</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-500 font-semibold">Total general</span>
+                <span class="font-bold text-gray-900 text-lg">{{ number_format($reservation->price + $paidTotal, 2, ',', ' ') }} &euro;</span>
+            </div>
+            @endif
+        </div>
+        @endif
+
+        {{-- Add supplement form --}}
+        <form method="POST" action="{{ route('admin.reservations.addSupplement', $reservation) }}" class="space-y-4 pt-4 border-t border-gray-100" x-data="{ actionType: 'send_link' }">
+            @csrf
+            <p class="text-sm font-semibold text-gray-700">Ajouter un complement</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2">
+                    <label class="form-label">Libelle</label>
+                    <input type="text" name="label" required class="form-input" placeholder="Ex: Sono supplementaire, Repas traiteur...">
+                </div>
+                <div>
+                    <label class="form-label">Montant (EUR)</label>
+                    <input type="number" step="0.01" min="0.01" name="amount" required class="form-input" placeholder="50.00">
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label">Details (optionnel)</label>
+                <textarea name="description" rows="2" class="form-input" placeholder="Description visible par le client..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="form-label">Action</label>
+                    <select name="action_type" x-model="actionType" class="form-input">
+                        <option value="send_link">Envoyer un lien de paiement par email</option>
+                        <option value="manual">Valider manuellement (deja paye)</option>
+                    </select>
+                </div>
+                <div x-show="actionType === 'manual'" x-transition>
+                    <label class="form-label">Mode de reglement</label>
+                    <select name="payment_method" class="form-input">
+                        <option value="especes">Especes</option>
+                        <option value="carte">Carte bancaire</option>
+                        <option value="virement">Virement</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                Ajouter le complement
+            </button>
+        </form>
+    </div>
+    @endif
+
 </div>
 @endsection

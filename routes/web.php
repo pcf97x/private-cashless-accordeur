@@ -43,6 +43,7 @@ Route::post('/acces', [AccessController::class, 'store']);
 
 Route::get('/devis/{token}/accept', [ReservationController::class, 'acceptQuote'])->name('quote.accept');
 Route::get('/devis/{token}/decline', [ReservationController::class, 'declineQuote'])->name('quote.decline');
+Route::get('/supplement/{token}/pay', [ReservationController::class, 'confirmSupplement'])->name('supplement.pay');
 
 /*
 |--------------------------------------------------------------------------
@@ -117,6 +118,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/reservations/{reservation}/resend-email', [ReservationAdminController::class, 'resendEmail'])->name('reservations.resendEmail');
     Route::post('/reservations/{reservation}/confirm-payment', [ReservationAdminController::class, 'confirmPayment'])->name('reservations.confirmPayment');
     Route::post('/reservations/{reservation}/cancel', [ReservationAdminController::class, 'cancelAndRefund'])->name('reservations.cancel');
+    Route::post('/reservations/{reservation}/supplement', [ReservationAdminController::class, 'addSupplement'])->name('reservations.addSupplement');
+    Route::post('/supplements/{supplement}/resend', [ReservationAdminController::class, 'resendSupplementEmail'])->name('supplements.resend');
+    Route::post('/supplements/{supplement}/confirm', [ReservationAdminController::class, 'confirmSupplement'])->name('supplements.confirm');
+    Route::post('/supplements/{supplement}/cancel', [ReservationAdminController::class, 'cancelSupplement'])->name('supplements.cancel');
 
     // Profils tarifaires, Options, Ecosystème
     Route::resource('pricing-profiles', PricingProfileController::class)->except(['show']);

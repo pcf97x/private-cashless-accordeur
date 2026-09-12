@@ -57,6 +57,11 @@ class Reservation extends Model
             ->withTimestamps();
     }
 
+    public function supplements()
+    {
+        return $this->hasMany(ReservationSupplement::class);
+    }
+
     /**
      * Check if a slot conflicts with existing reservations (including overlapping time slots).
      * E.g. AM (7-13) conflicts with FULL_DAY (7-18) and vice versa.

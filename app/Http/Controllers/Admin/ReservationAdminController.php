@@ -10,12 +10,14 @@ use App\Models\PricingProfile;
 use App\Models\RoomRate;
 use App\Models\Contact;
 use App\Models\Checkin;
+use App\Models\ReservationSupplement;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\ReservationConfirmed;
 use App\Mail\QuoteSent;
+use App\Mail\SupplementPaymentRequest;
 use Stripe\Stripe;
 use Stripe\Refund;
 use Illuminate\Support\Facades\Log;
@@ -263,6 +265,7 @@ class ReservationAdminController extends Controller
         'room',
         'timeSlot',
         'pricingProfile',
+        'supplements',
     ]);
 
     return view('admin.reservations.show', compact('reservation'));
@@ -345,7 +348,67 @@ public function cancelAndRefund(Reservation $reservation)
     }
 }
 
+// ─── Supplements ───────────────────────────────────────────
 
+public function addSupplement(Request $request, Reservation $reservation)
+{
+    $request->validate([
+        'label' => 'required|string|max:255',
+        'description' => 'nullable|string|max:2000',
+        'amount' => 'required|numeric|min:0.01',
+        'action_type' => 'required|in:send_link,manual',
+        'payment_method' => 'required_if:action_type,manual|nullable|string',
+    ]);
 
+    $supplement = $reservation->supplements()->create([
+        'label' => $request->label,
+        'description' => $request->description,
+        'amount' => $request->amount,
+        'status' => $request->action_type === 'manual' ? 'paid' : 'pending',
+        'payment_method' => $request->action_type === 'manual' ? $request->payment_method : null,
+        'token' => $request->action_type === 'send_link' ? Str::random(48) : null,
+    ]);
+
+    if ($request->action_type === 'send_link') {
+        Mail::to($reservation->email)->send(new SupplementPaymentRequest($supplement));
+        return back()->with('success', 'Complement ajoute et lien de paiement envoye a ' . $reservation->email);
+    }
+
+    return back()->with('success', 'Complement ajoute et marque comme paye.');
+}
+
+public function resendSupplementEmail(ReservationSupplement $supplement)
+{
+    if ($supplement->status !== 'pending' || !$supplement->token) {
+        return back()->with('error', 'Ce complement n\'est pas en attente de paiement.');
+    }
+
+    $supplement->load('reservation');
+    Mail::to($supplement->reservation->email)->send(new SupplementPaymentRequest($supplement));
+
+    return back()->with('success', 'Lien de paiement renvoye.');
+}
+
+public function confirmSupplement(Request $request, ReservationSupplement $supplement)
+{
+    if ($supplement->status !== 'pending') {
+        return back()->with('error', 'Ce complement n\'est pas en attente.');
+    }
+
+    $request->validate(['payment_method' => 'required|string']);
+
+    $supplement->update([
+        'status' => 'paid',
+        'payment_method' => $request->payment_method,
+    ]);
+
+    return back()->with('success', 'Complement marque comme paye.');
+}
+
+public function cancelSupplement(ReservationSupplement $supplement)
+{
+    $supplement->update(['status' => 'cancelled']);
+    return back()->with('success', 'Complement annule.');
+}
 
 }

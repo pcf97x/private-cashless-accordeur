@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\ReservationConfirmed;
 use App\Mail\ReservationAdminNotification;
 use App\Models\Contact;
+use App\Models\ReservationSupplement;
 use App\Models\Checkin;
 use App\Services\WeezeventParticipantService;
 use Illuminate\Support\Str;
@@ -343,6 +344,26 @@ return redirect()->route('reservation.pay', $reservation);
         Mail::to($reservation->email)->send(new ReservationConfirmed($reservation));
 
         return view('quote-response', ['action' => 'accepted', 'reservation' => $reservation]);
+    }
+
+    public function confirmSupplement(string $token)
+    {
+        $supplement = ReservationSupplement::where('token', $token)->first();
+
+        if (!$supplement) {
+            return view('supplement-response', ['action' => 'expired', 'supplement' => null]);
+        }
+
+        if ($supplement->status !== 'pending') {
+            return view('supplement-response', ['action' => 'already_paid', 'supplement' => $supplement]);
+        }
+
+        $supplement->update([
+            'status' => 'paid',
+            'payment_method' => 'en_ligne',
+        ]);
+
+        return view('supplement-response', ['action' => 'confirmed', 'supplement' => $supplement]);
     }
 
     public function declineQuote(string $token)
