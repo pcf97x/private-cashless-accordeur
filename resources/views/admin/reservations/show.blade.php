@@ -84,6 +84,23 @@
                 </button>
             </form>
 
+            @if ($reservation->status === 'pending')
+                <form method="POST" action="{{ route('admin.reservations.confirmPayment', $reservation) }}" class="flex items-center gap-2">
+                    @csrf
+                    <select name="payment_method" required class="form-input !py-2 !text-sm !w-auto">
+                        <option value="especes">Especes</option>
+                        <option value="carte">Carte bancaire</option>
+                        <option value="virement">Virement</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                    <button type="submit" class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Valider le paiement
+                    </button>
+                </form>
+            @endif
+
             @if ($reservation->status === 'paid')
                 <form method="POST" action="{{ route('admin.reservations.cancel', $reservation) }}" onsubmit="return confirm('Confirmer l\'annulation et le remboursement Stripe ?');">
                     @csrf

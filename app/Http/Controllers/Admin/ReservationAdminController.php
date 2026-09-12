@@ -86,6 +86,7 @@ class ReservationAdminController extends Controller
             'phone' => $request->phone,
             'price' => $price,
             'status' => $request->status === 'gratuit' ? 'paid' : $request->status,
+            'payment_method' => $request->status === 'paid' ? $request->payment_method : ($request->status === 'gratuit' ? 'gratuit' : null),
         ]);
 
         // Créer/mettre à jour le contact
@@ -120,6 +121,24 @@ public function resendEmail(Reservation $reservation)
 
     return back()->with('success', 'Email de confirmation renvoyé.');
 }
+    public function confirmPayment(Request $request, Reservation $reservation)
+    {
+        if ($reservation->status !== 'pending') {
+            return back()->with('error', 'Cette réservation n\'est pas en attente.');
+        }
+
+        $request->validate([
+            'payment_method' => 'required|string',
+        ]);
+
+        $reservation->update([
+            'status' => 'paid',
+            'payment_method' => $request->payment_method,
+        ]);
+
+        return back()->with('success', 'Paiement validé pour la réservation #' . $reservation->id);
+    }
+
 public function cancelAndRefund(Reservation $reservation)
 {
     // Sécurité

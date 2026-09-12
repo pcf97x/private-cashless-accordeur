@@ -23,6 +23,7 @@ class Reservation extends Model
         'phone',
         'price',
         'status',
+        'payment_method',
         'stripe_session_id',
     ];
     protected $casts = [

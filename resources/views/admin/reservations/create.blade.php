@@ -83,14 +83,27 @@
                 </div>
             </div>
 
-            <div>
-                <label for="status" class="form-label">Statut</label>
-                <select name="status" id="status" required class="form-input">
-                    <option value="paid" {{ old('status') === 'paid' ? 'selected' : '' }}>Paye (reglement recu)</option>
-                    <option value="gratuit" {{ old('status') === 'gratuit' ? 'selected' : '' }}>Gratuit (mise a disposition)</option>
-                    <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>En attente de paiement</option>
-                </select>
-                @error('status') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="status" class="form-label">Statut</label>
+                    <select name="status" id="status" required class="form-input" onchange="document.getElementById('payment_method_block').style.display = this.value === 'paid' ? 'block' : 'none'">
+                        <option value="paid" {{ old('status', 'paid') === 'paid' ? 'selected' : '' }}>Paye</option>
+                        <option value="gratuit" {{ old('status') === 'gratuit' ? 'selected' : '' }}>Gratuit (mise a disposition)</option>
+                        <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>En attente de paiement</option>
+                    </select>
+                    @error('status') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div id="payment_method_block" style="{{ old('status', 'paid') === 'paid' ? '' : 'display:none' }}">
+                    <label for="payment_method" class="form-label">Mode de reglement</label>
+                    <select name="payment_method" id="payment_method" class="form-input">
+                        <option value="especes" {{ old('payment_method') === 'especes' ? 'selected' : '' }}>Especes</option>
+                        <option value="carte" {{ old('payment_method') === 'carte' ? 'selected' : '' }}>Carte bancaire</option>
+                        <option value="virement" {{ old('payment_method') === 'virement' ? 'selected' : '' }}>Virement</option>
+                        <option value="cheque" {{ old('payment_method') === 'cheque' ? 'selected' : '' }}>Cheque</option>
+                        <option value="en_ligne" {{ old('payment_method') === 'en_ligne' ? 'selected' : '' }}>Paiement en ligne (Stripe)</option>
+                        <option value="autre" {{ old('payment_method') === 'autre' ? 'selected' : '' }}>Autre</option>
+                    </select>
+                </div>
             </div>
 
             <div class="flex items-center gap-3 pt-4 border-t border-gray-100">

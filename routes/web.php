@@ -104,6 +104,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/reservations', [ReservationAdminController::class, 'store'])->name('reservations.store');
     Route::get('/reservations/{reservation}', [ReservationAdminController::class, 'show'])->name('reservations.show');
     Route::post('/reservations/{reservation}/resend-email', [ReservationAdminController::class, 'resendEmail'])->name('reservations.resendEmail');
+    Route::post('/reservations/{reservation}/confirm-payment', [ReservationAdminController::class, 'confirmPayment'])->name('reservations.confirmPayment');
     Route::post('/reservations/{reservation}/cancel', [ReservationAdminController::class, 'cancelAndRefund'])->name('reservations.cancel');
 
     // Profils tarifaires, Options, Ecosystème
