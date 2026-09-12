@@ -17,7 +17,7 @@ class PublicController extends Controller
 
     public function espaces()
     {
-        $rooms = Room::orderBy('capacity')->get();
+        $rooms = Room::where('active', true)->orderBy('capacity')->get();
         return view('public.espaces', compact('rooms'));
     }
 
