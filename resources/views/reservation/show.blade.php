@@ -577,19 +577,37 @@ function reservationCalendar() {
             });
         },
 
+        slotsOverlap(slotA, slotB) {
+            return slotA.start_time < slotB.end_time && slotA.end_time > slotB.start_time;
+        },
+
+        getSlotById(slotId) {
+            const timeSlots = @json($timeSlots);
+            return timeSlots.find(s => s.id === slotId);
+        },
+
+        isSlotBlockedForDate(slot, dateStr) {
+            const dayReservations = this.getReservationsForDate(dateStr);
+            return dayReservations.some(r => {
+                const bookedSlot = this.getSlotById(r.time_slot_id);
+                return bookedSlot && this.slotsOverlap(slot, bookedSlot);
+            });
+        },
+
         getSlotStatus(day) {
             if (!day.date) return [];
             const timeSlots = @json($timeSlots);
-            const dayReservations = this.getReservationsForDate(day.date);
             return timeSlots.map(slot => ({
                 id: slot.id,
-                available: !dayReservations.some(r => r.time_slot_id === slot.id),
+                available: !this.isSlotBlockedForDate(slot, day.date),
             }));
         },
 
         isSlotBooked(slotId) {
             if (!this.selectedDate) return false;
-            return this.getReservationsForDate(this.selectedDate).some(r => r.time_slot_id === slotId);
+            const slot = this.getSlotById(slotId);
+            if (!slot) return false;
+            return this.isSlotBlockedForDate(slot, this.selectedDate);
         },
 
         selectSlot(slotId, label, start, end) {
