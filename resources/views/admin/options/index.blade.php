@@ -19,6 +19,7 @@
             <table class="w-full text-sm">
                 <thead class="bg-gray-50/80">
                     <tr>
+                        <th class="w-10"></th>
                         <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Option</th>
                         <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Description</th>
                         <th class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">Prix</th>
@@ -26,9 +27,12 @@
                         <th class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="sortable-options">
                     @foreach($options as $option)
-                        <tr class="border-t border-gray-50 hover:bg-accordeur-50/30 transition-colors">
+                        <tr class="border-t border-gray-50 hover:bg-accordeur-50/30 transition-colors" data-id="{{ $option->id }}">
+                            <td class="pl-4 py-4 cursor-grab drag-handle text-gray-300 hover:text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                            </td>
                             <td class="px-6 py-4 font-medium text-gray-900">{{ $option->name }}</td>
                             <td class="px-6 py-4 text-gray-500 max-w-xs truncate">{{ $option->description ?? '—' }}</td>
                             <td class="px-6 py-4 text-center">
@@ -59,10 +63,35 @@
     @else
         <div class="card p-12 text-center">
             <h3 class="text-lg font-display font-bold text-gray-900 mb-1">Aucune option</h3>
-            <p class="text-gray-500 mb-6">Ajoutez des extras comme le petit déjeuner ou le repas</p>
-            <a href="{{ route('admin.options.create') }}" class="btn-primary">Créer une option</a>
+            <p class="text-gray-500 mb-6">Ajoutez des extras comme le petit dejeuner ou le repas</p>
+            <a href="{{ route('admin.options.create') }}" class="btn-primary">Creer une option</a>
         </div>
     @endif
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const el = document.getElementById('sortable-options');
+    if (!el) return;
+
+    Sortable.create(el, {
+        handle: '.drag-handle',
+        animation: 150,
+        ghostClass: 'bg-accordeur-50',
+        onEnd: function() {
+            const ids = [...el.querySelectorAll('tr[data-id]')].map(r => parseInt(r.dataset.id));
+            fetch('{{ route("admin.options.reorder") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({ ids }),
+            });
+        }
+    });
+});
+</script>
 @endsection

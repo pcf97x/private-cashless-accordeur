@@ -10,6 +10,7 @@ class PricingProfile extends Model
         'code',
         'label',
         'active',
+        'sort_order',
     ];
 
     protected $casts = [

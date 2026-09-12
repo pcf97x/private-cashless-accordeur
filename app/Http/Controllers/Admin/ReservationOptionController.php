@@ -14,6 +14,17 @@ class ReservationOptionController extends Controller
         return view('admin.options.index', compact('options'));
     }
 
+    public function reorder(Request $request)
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+
+        foreach ($request->ids as $i => $id) {
+            ReservationOption::where('id', $id)->update(['sort_order' => $i]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     public function create()
     {
         return view('admin.options.create');

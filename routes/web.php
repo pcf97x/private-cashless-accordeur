@@ -120,7 +120,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Profils tarifaires, Options, Ecosystème
     Route::resource('pricing-profiles', PricingProfileController::class)->except(['show']);
+    Route::post('pricing-profiles/reorder', [PricingProfileController::class, 'reorder'])->name('pricing-profiles.reorder');
     Route::resource('options', ReservationOptionController::class)->except(['show']);
+    Route::post('options/reorder', [ReservationOptionController::class, 'reorder'])->name('options.reorder');
     Route::resource('ecosystem', EcosystemPartnerController::class)->except(['show']);
 
     // Rapports de présence

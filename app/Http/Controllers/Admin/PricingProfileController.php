@@ -10,8 +10,19 @@ class PricingProfileController extends Controller
 {
     public function index()
     {
-        $profiles = PricingProfile::orderBy('id')->get();
+        $profiles = PricingProfile::orderBy('sort_order')->orderBy('id')->get();
         return view('admin.pricing_profiles.index', compact('profiles'));
+    }
+
+    public function reorder(Request $request)
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
+
+        foreach ($request->ids as $i => $id) {
+            PricingProfile::where('id', $id)->update(['sort_order' => $i]);
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function create()
