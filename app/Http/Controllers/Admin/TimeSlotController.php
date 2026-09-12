@@ -38,7 +38,7 @@ class TimeSlotController extends Controller
 
     public function edit(TimeSlot $time_slot)
     {
-        return view('admin.time_slots.edit', compact('time_slot'));
+        return view('admin.time_slots.edit', ['timeSlot' => $time_slot]);
     }
 
     public function update(Request $request, TimeSlot $time_slot)
