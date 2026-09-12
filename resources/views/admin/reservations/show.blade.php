@@ -124,12 +124,12 @@
                 </form>
             @endif
 
-            @if (in_array($reservation->status, ['paid', 'devis']))
-                <form method="POST" action="{{ route('admin.reservations.cancel', $reservation) }}" onsubmit="return confirm('{{ $reservation->status === 'devis' ? 'Annuler ce devis ?' : 'Confirmer l\'annulation et le remboursement Stripe ?' }}');">
+            @if (in_array($reservation->status, ['pending', 'paid', 'devis']))
+                <form method="POST" action="{{ route('admin.reservations.cancel', $reservation) }}" onsubmit="return confirm('{{ $reservation->status === 'devis' ? 'Annuler ce devis ?' : ($reservation->status === 'pending' ? 'Annuler cette reservation ?' : 'Confirmer l\'annulation et le remboursement Stripe ?') }}');">
                     @csrf
                     <button type="submit" class="btn bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 border border-red-200">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        {{ $reservation->status === 'devis' ? 'Annuler le devis' : 'Annuler & rembourser' }}
+                        {{ $reservation->status === 'devis' ? 'Annuler le devis' : ($reservation->status === 'pending' ? 'Annuler' : 'Annuler & rembourser') }}
                     </button>
                 </form>
             @endif
