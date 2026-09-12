@@ -61,29 +61,8 @@
                             @endif
                         </td>
                         <td>
-                            <div class="flex items-center justify-end gap-2">
+                            <div class="flex items-center justify-end">
                                 <a href="{{ route('admin.reservations.show', $r) }}" class="btn-outline !py-1 !px-2.5 !text-xs !rounded-lg">Voir</a>
-                                @if($r->status === 'pending')
-                                    <form method="POST" action="{{ route('admin.reservations.confirmPayment', $r) }}" class="flex items-center gap-1">
-                                        @csrf
-                                        <select name="payment_method" required class="form-input !py-1 !px-2 !text-xs !rounded-lg !w-auto">
-                                            <option value="especes">Especes</option>
-                                            <option value="carte">Carte</option>
-                                            <option value="virement">Virement</option>
-                                            <option value="cheque">Cheque</option>
-                                            <option value="autre">Autre</option>
-                                        </select>
-                                        <button type="submit" class="btn !py-1 !px-2.5 !text-xs !rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200" title="Valider le paiement">
-                                            Valider
-                                        </button>
-                                    </form>
-                                    <form method="POST" action="{{ route('admin.reservations.cancel', $r) }}" onsubmit="return confirm('Annuler cette réservation ?');">
-                                        @csrf
-                                        <button type="submit" class="btn !py-1 !px-2.5 !text-xs !rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200" title="Annuler">
-                                            Annuler
-                                        </button>
-                                    </form>
-                                @endif
                             </div>
                         </td>
                     </tr>
