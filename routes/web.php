@@ -100,6 +100,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Reservations
     Route::get('/reservations', [ReservationAdminController::class, 'index'])->name('reservations.index');
+    Route::get('/reservations/create', [ReservationAdminController::class, 'create'])->name('reservations.create');
+    Route::post('/reservations', [ReservationAdminController::class, 'store'])->name('reservations.store');
     Route::get('/reservations/{reservation}', [ReservationAdminController::class, 'show'])->name('reservations.show');
     Route::post('/reservations/{reservation}/resend-email', [ReservationAdminController::class, 'resendEmail'])->name('reservations.resendEmail');
     Route::post('/reservations/{reservation}/cancel', [ReservationAdminController::class, 'cancelAndRefund'])->name('reservations.cancel');
