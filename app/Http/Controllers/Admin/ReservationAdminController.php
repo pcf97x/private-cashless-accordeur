@@ -32,7 +32,7 @@ class ReservationAdminController extends Controller
     {
         $rooms = Room::where('active', true)->orderBy('name')->get();
         $timeSlots = TimeSlot::where('active', true)->orderBy('order_index')->get();
-        $profiles = PricingProfile::where('active', true)->orderBy('id')->get();
+        $profiles = PricingProfile::where('active', true)->orderBy('sort_order')->orderBy('id')->get();
 
         return view('admin.reservations.create', compact('rooms', 'timeSlots', 'profiles'));
     }

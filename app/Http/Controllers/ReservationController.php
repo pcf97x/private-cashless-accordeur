@@ -32,7 +32,7 @@ public function index()
 public function show(Room $room)
 {
     $timeSlots = TimeSlot::where('active', true)->orderBy('order_index')->get();
-    $pricingProfiles = PricingProfile::where('active', true)->orderBy('id')->get();
+    $pricingProfiles = PricingProfile::where('active', true)->orderBy('sort_order')->orderBy('id')->get();
     $user = auth()->user();
 
     // Réservations existantes pour cette salle (pour le calendrier interactif)

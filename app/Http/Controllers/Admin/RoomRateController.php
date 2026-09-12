@@ -18,7 +18,7 @@ class RoomRateController extends Controller
             'timeSlots' => TimeSlot::where('active', true)
                 ->orderBy('order_index')
                 ->get(),
-            'profiles' => PricingProfile::where('active', true)->get(),
+            'profiles' => PricingProfile::where('active', true)->orderBy('sort_order')->orderBy('id')->get(),
 
             // clé simple et ultra efficace
             'rates' => RoomRate::all()->keyBy(function ($rate) {
