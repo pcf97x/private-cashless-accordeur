@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\EcosystemPartnerController;
 use App\Http\Controllers\Admin\PricingProfileController;
 use App\Http\Controllers\Admin\ReservationOptionController;
+use App\Http\Controllers\Admin\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -106,6 +107,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('pricing-profiles', PricingProfileController::class)->except(['show']);
     Route::resource('options', ReservationOptionController::class)->except(['show']);
     Route::resource('ecosystem', EcosystemPartnerController::class)->except(['show']);
+
+    // Rapports de présence
+    Route::get('/rapports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/rapports/csv', [ReportController::class, 'exportCsv'])->name('reports.csv');
+    Route::get('/rapports/pdf', [ReportController::class, 'exportPdf'])->name('reports.pdf');
 });
 
 // Utilisateurs (admin uniquement)
