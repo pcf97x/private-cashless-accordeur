@@ -94,6 +94,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Salles, Créneaux, Tarifs
     Route::resource('rooms', RoomController::class);
+    Route::post('/rooms/{room}/toggle', [RoomController::class, 'toggle'])->name('rooms.toggle');
     Route::resource('time-slots', TimeSlotController::class)->except(['show']);
     Route::resource('rates', RoomRateController::class);
 

@@ -67,13 +67,22 @@
                             <a href="{{ route('admin.rooms.edit', $room) }}" class="btn-outline !py-1.5 !px-3 !text-xs !rounded-lg flex-1 text-center">
                                 Modifier
                             </a>
-                            <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" onsubmit="return confirm('Supprimer cette salle ?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn !py-1.5 !px-3 !text-xs !rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">
-                                    Supprimer
-                                </button>
-                            </form>
+                            @if($room->reservations()->exists())
+                                <form method="POST" action="{{ route('admin.rooms.toggle', $room) }}">
+                                    @csrf
+                                    <button type="submit" class="btn !py-1.5 !px-3 !text-xs !rounded-lg {{ $room->active ? 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200' }}">
+                                        {{ $room->active ? 'Désactiver' : 'Réactiver' }}
+                                    </button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" onsubmit="return confirm('Supprimer cette salle ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn !py-1.5 !px-3 !text-xs !rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">
+                                        Supprimer
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </div>
                 </div>

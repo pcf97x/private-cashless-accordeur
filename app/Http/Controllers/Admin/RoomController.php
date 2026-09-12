@@ -88,6 +88,15 @@ class RoomController extends Controller
             ->with('success', 'Salle mise à jour.');
     }
 
+    public function toggle(Room $room)
+    {
+        $room->update(['active' => !$room->active]);
+
+        $status = $room->active ? 'réactivée' : 'désactivée';
+        return redirect()->route('admin.rooms.index')
+            ->with('success', 'Salle ' . $room->name . ' ' . $status . '.');
+    }
+
     public function destroy(Room $room)
     {
         if ($room->reservations()->exists()) {
