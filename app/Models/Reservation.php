@@ -56,5 +56,31 @@ class Reservation extends Model
             ->withPivot('quantity', 'unit_price')
             ->withTimestamps();
     }
+
+    /**
+     * Check if a slot conflicts with existing reservations (including overlapping time slots).
+     * E.g. AM (7-13) conflicts with FULL_DAY (7-18) and vice versa.
+     */
+    public static function hasConflict(int $roomId, int $timeSlotId, string $date, ?int $excludeId = null): bool
+    {
+        $slot = TimeSlot::find($timeSlotId);
+        if (!$slot) return false;
+
+        // Find all time slots that overlap with the requested one
+        $overlappingSlotIds = TimeSlot::where('start_time', '<', $slot->end_time)
+            ->where('end_time', '>', $slot->start_time)
+            ->pluck('id');
+
+        $query = static::where('room_id', $roomId)
+            ->whereIn('time_slot_id', $overlappingSlotIds)
+            ->whereDate('date', $date)
+            ->whereIn('status', ['pending', 'paid', 'devis']);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
+    }
 }
 

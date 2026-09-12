@@ -55,14 +55,8 @@ class ReservationAdminController extends Controller
         $date = Carbon::parse($request->date)->startOfDay();
         $timeSlot = TimeSlot::findOrFail($request->time_slot_id);
 
-        // Vérifier conflit (devis bloque aussi le créneau)
-        $exists = Reservation::where('room_id', $request->room_id)
-            ->where('time_slot_id', $request->time_slot_id)
-            ->whereDate('date', $date->toDateString())
-            ->whereIn('status', ['pending', 'paid', 'gratuit', 'devis'])
-            ->exists();
-
-        if ($exists) {
+        // Vérifier conflit (inclut chevauchements AM/PM/Journée)
+        if (Reservation::hasConflict($request->room_id, $request->time_slot_id, $date->toDateString())) {
             return back()->withInput()->withErrors(['date' => 'Ce créneau est déjà réservé pour cette date.']);
         }
 
@@ -208,14 +202,8 @@ class ReservationAdminController extends Controller
                 continue;
             }
 
-            // Vérifier conflit
-            $exists = Reservation::where('room_id', $room->id)
-                ->where('time_slot_id', $timeSlot->id)
-                ->whereDate('date', $parsedDate->toDateString())
-                ->whereIn('status', ['pending', 'paid'])
-                ->exists();
-
-            if ($exists) {
+            // Vérifier conflit (inclut chevauchements AM/PM/Journée)
+            if (Reservation::hasConflict($room->id, $timeSlot->id, $parsedDate->toDateString())) {
                 $errors[] = "Ligne $lineNum : creneau deja reserve ($roomName, $date, $slotCode)";
                 $skipped++;
                 continue;

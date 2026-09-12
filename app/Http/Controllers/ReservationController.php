@@ -38,7 +38,7 @@ public function show(Room $room)
     // Réservations existantes pour cette salle (pour le calendrier interactif)
     $reservations = Reservation::where('room_id', $room->id)
         ->where('date', '>=', now()->startOfMonth())
-        ->whereIn('status', ['pending', 'paid'])
+        ->whereIn('status', ['pending', 'paid', 'devis'])
         ->with('timeSlot')
         ->get();
 
@@ -70,14 +70,8 @@ public function show(Room $room)
 
         $date = Carbon::parse($request->date)->toDateString();
 
-        // Anti-conflit : on bloque si pending OU paid
-        $exists = Reservation::where('room_id', $request->room_id)
-            ->where('time_slot_id', $request->time_slot_id)
-            ->whereDate('date', $date)
-            ->whereIn('status', ['pending', 'paid'])
-            ->exists();
-
-        if ($exists) {
+        // Anti-conflit (inclut chevauchements AM/PM/Journée)
+        if (Reservation::hasConflict($request->room_id, $request->time_slot_id, $date)) {
              return response()->json([
         'available' => false,
         'price' => null,
@@ -125,15 +119,8 @@ public function store(Request $request)
 
         $date = Carbon::parse($request->date)->startOfDay();
 
-        // 🔐 Anti-conflit TOTAL (pending + paid)
-        $exists = Reservation::where('room_id', $request->room_id)
-            ->where('time_slot_id', $request->time_slot_id)
-            ->whereDate('date', $date->toDateString())
-            ->whereIn('status', ['pending', 'paid'])
-            ->lockForUpdate()
-            ->exists();
-
-        if ($exists) {
+        // Anti-conflit (inclut chevauchements AM/PM/Journée)
+        if (Reservation::hasConflict($request->room_id, $request->time_slot_id, $date->toDateString())) {
             return back()
                 ->withInput()
                 ->withErrors(['date' => 'Créneau déjà réservé']);
