@@ -101,6 +101,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Reservations
     Route::get('/reservations', [ReservationAdminController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/create', [ReservationAdminController::class, 'create'])->name('reservations.create');
+    Route::get('/reservations/import', [ReservationAdminController::class, 'importForm'])->name('reservations.import.form');
+    Route::post('/reservations/import', [ReservationAdminController::class, 'import'])->name('reservations.import');
     Route::post('/reservations', [ReservationAdminController::class, 'store'])->name('reservations.store');
     Route::get('/reservations/{reservation}', [ReservationAdminController::class, 'show'])->name('reservations.show');
     Route::post('/reservations/{reservation}/resend-email', [ReservationAdminController::class, 'resendEmail'])->name('reservations.resendEmail');

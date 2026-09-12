@@ -103,6 +103,153 @@ class ReservationAdminController extends Controller
             ->with('success', 'Réservation créée manuellement.');
     }
 
+    public function importForm()
+    {
+        return view('admin.reservations.import');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls',
+            'default_status' => 'required|in:paid,pending,gratuit',
+            'default_payment_method' => 'nullable|string',
+        ]);
+
+        $file = $request->file('file');
+        $extension = $file->getClientOriginalExtension();
+
+        // Lire le fichier CSV
+        $rows = [];
+        if (in_array($extension, ['csv', 'txt'])) {
+            $handle = fopen($file->getRealPath(), 'r');
+            $header = null;
+            while (($line = fgetcsv($handle, 0, ';')) !== false) {
+                if (!$header) {
+                    // Nettoyer BOM UTF-8
+                    $line[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $line[0]);
+                    $header = array_map('strtolower', array_map('trim', $line));
+                    continue;
+                }
+                if (count($line) === count($header)) {
+                    $rows[] = array_combine($header, $line);
+                }
+            }
+            fclose($handle);
+        }
+
+        if (empty($rows)) {
+            return back()->with('error', 'Fichier vide ou format non reconnu. Utilisez un CSV avec separateur point-virgule (;).');
+        }
+
+        $imported = 0;
+        $skipped = 0;
+        $errors = [];
+
+        foreach ($rows as $i => $row) {
+            $lineNum = $i + 2;
+
+            $roomName = trim($row['salle'] ?? '');
+            $date = trim($row['date'] ?? '');
+            $slotCode = trim($row['creneau'] ?? '');
+            $name = trim($row['client'] ?? $row['nom'] ?? '');
+            $email = trim($row['email'] ?? '');
+            $phone = trim($row['telephone'] ?? $row['tel'] ?? '');
+
+            if (!$roomName || !$date || !$slotCode || !$name) {
+                $errors[] = "Ligne $lineNum : champs obligatoires manquants (salle, date, creneau, client)";
+                $skipped++;
+                continue;
+            }
+
+            $room = Room::where('name', 'LIKE', "%$roomName%")->first();
+            if (!$room) {
+                $errors[] = "Ligne $lineNum : salle '$roomName' introuvable";
+                $skipped++;
+                continue;
+            }
+
+            $timeSlot = TimeSlot::where('code', $slotCode)
+                ->orWhere('label', 'LIKE', "%$slotCode%")
+                ->first();
+            if (!$timeSlot) {
+                $errors[] = "Ligne $lineNum : creneau '$slotCode' introuvable";
+                $skipped++;
+                continue;
+            }
+
+            // Parser la date (dd/mm/yyyy ou yyyy-mm-dd)
+            try {
+                $parsedDate = str_contains($date, '/')
+                    ? Carbon::createFromFormat('d/m/Y', $date)->startOfDay()
+                    : Carbon::parse($date)->startOfDay();
+            } catch (\Exception $e) {
+                $errors[] = "Ligne $lineNum : date '$date' invalide";
+                $skipped++;
+                continue;
+            }
+
+            // Vérifier conflit
+            $exists = Reservation::where('room_id', $room->id)
+                ->where('time_slot_id', $timeSlot->id)
+                ->whereDate('date', $parsedDate->toDateString())
+                ->whereIn('status', ['pending', 'paid'])
+                ->exists();
+
+            if ($exists) {
+                $errors[] = "Ligne $lineNum : creneau deja reserve ($roomName, $date, $slotCode)";
+                $skipped++;
+                continue;
+            }
+
+            $profile = PricingProfile::where('active', true)->first();
+            $rate = RoomRate::where('room_id', $room->id)
+                ->where('time_slot_id', $timeSlot->id)
+                ->where('pricing_profile_id', $profile->id)
+                ->first();
+
+            $status = $request->default_status === 'gratuit' ? 'paid' : $request->default_status;
+            $price = $request->default_status === 'gratuit' ? 0 : ($rate->price ?? 0);
+            $paymentMethod = $status === 'paid' ? ($request->default_payment_method ?? 'autre') : null;
+            if ($request->default_status === 'gratuit') $paymentMethod = 'gratuit';
+
+            $startAt = $parsedDate->copy()->setTimeFromTimeString($timeSlot->start_time);
+            $endAt = $parsedDate->copy()->setTimeFromTimeString($timeSlot->end_time);
+
+            Reservation::create([
+                'room_id' => $room->id,
+                'time_slot_id' => $timeSlot->id,
+                'pricing_profile_id' => $profile->id,
+                'date' => $parsedDate->toDateString(),
+                'start_at' => $startAt,
+                'end_at' => $endAt,
+                'name' => $name,
+                'email' => $email ?: 'import@laccordeur.gf',
+                'phone' => $phone ?: '',
+                'price' => $price,
+                'status' => $status,
+                'payment_method' => $paymentMethod,
+            ]);
+
+            if ($email) {
+                $nameParts = explode(' ', $name, 2);
+                Contact::firstOrCreate(
+                    ['email' => $email],
+                    ['firstname' => $nameParts[0], 'lastname' => $nameParts[1] ?? '']
+                );
+            }
+
+            $imported++;
+        }
+
+        $message = "$imported reservation(s) importee(s).";
+        if ($skipped > 0) $message .= " $skipped ignoree(s).";
+
+        return redirect()->route('admin.reservations.index')
+            ->with('success', $message)
+            ->with($errors ? 'error' : 'info', implode(' | ', $errors));
+    }
+
     public function show(Reservation $reservation)
 {
     $reservation->load([
