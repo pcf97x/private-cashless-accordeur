@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\ReservationConfirmed;
+use App\Mail\QuoteSent;
 use Stripe\Stripe;
 use Stripe\Refund;
 use Illuminate\Support\Facades\Log;
@@ -46,33 +47,41 @@ class ReservationAdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:50',
-            'status' => 'required|in:paid,pending,gratuit',
+            'status' => 'required|in:paid,pending,gratuit,devis',
+            'custom_price' => 'nullable|numeric|min:0',
+            'devis_notes' => 'nullable|string|max:2000',
         ]);
 
         $date = Carbon::parse($request->date)->startOfDay();
         $timeSlot = TimeSlot::findOrFail($request->time_slot_id);
 
-        // Vérifier conflit
+        // Vérifier conflit (devis bloque aussi le créneau)
         $exists = Reservation::where('room_id', $request->room_id)
             ->where('time_slot_id', $request->time_slot_id)
             ->whereDate('date', $date->toDateString())
-            ->whereIn('status', ['pending', 'paid', 'gratuit'])
+            ->whereIn('status', ['pending', 'paid', 'gratuit', 'devis'])
             ->exists();
 
         if ($exists) {
             return back()->withInput()->withErrors(['date' => 'Ce créneau est déjà réservé pour cette date.']);
         }
 
-        // Prix
+        // Prix : custom si renseigné, sinon tarif standard
         $rate = RoomRate::where('room_id', $request->room_id)
             ->where('time_slot_id', $request->time_slot_id)
             ->where('pricing_profile_id', $request->pricing_profile_id)
             ->first();
 
-        $price = $request->status === 'gratuit' ? 0 : ($rate->price ?? 0);
+        if ($request->filled('custom_price')) {
+            $price = (float) $request->custom_price;
+        } else {
+            $price = $request->status === 'gratuit' ? 0 : ($rate->price ?? 0);
+        }
 
         $startAt = $date->copy()->setTimeFromTimeString($timeSlot->start_time);
         $endAt = $date->copy()->setTimeFromTimeString($timeSlot->end_time);
+
+        $isDevis = $request->status === 'devis';
 
         $reservation = Reservation::create([
             'room_id' => $request->room_id,
@@ -85,8 +94,10 @@ class ReservationAdminController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'price' => $price,
-            'status' => $request->status === 'gratuit' ? 'paid' : $request->status,
+            'status' => $isDevis ? 'devis' : ($request->status === 'gratuit' ? 'paid' : $request->status),
             'payment_method' => $request->status === 'paid' ? $request->payment_method : ($request->status === 'gratuit' ? 'gratuit' : null),
+            'devis_token' => $isDevis ? Str::random(48) : null,
+            'devis_notes' => $isDevis ? $request->devis_notes : null,
         ]);
 
         // Créer/mettre à jour le contact
@@ -98,6 +109,14 @@ class ReservationAdminController extends Controller
             ['email' => $request->email],
             ['firstname' => $firstname, 'lastname' => $lastname, 'phone' => $request->phone]
         );
+
+        // Envoyer le devis par email
+        if ($isDevis) {
+            Mail::to($reservation->email)->send(new QuoteSent($reservation));
+
+            return redirect()->route('admin.reservations.index')
+                ->with('success', 'Devis cree et envoye par email a ' . $reservation->email);
+        }
 
         return redirect()->route('admin.reservations.index')
             ->with('success', 'Réservation créée manuellement.');
@@ -263,6 +282,11 @@ class ReservationAdminController extends Controller
 
 public function resendEmail(Reservation $reservation)
 {
+    if ($reservation->status === 'devis') {
+        Mail::to($reservation->email)->send(new QuoteSent($reservation));
+        return back()->with('success', 'Devis renvoye par email.');
+    }
+
     Mail::to($reservation->email)
         ->send(new ReservationConfirmed($reservation));
 
@@ -288,8 +312,8 @@ public function resendEmail(Reservation $reservation)
 
 public function cancelAndRefund(Reservation $reservation)
 {
-    // Réservation en attente → annulation simple
-    if ($reservation->status === 'pending') {
+    // Devis ou en attente → annulation simple
+    if (in_array($reservation->status, ['pending', 'devis'])) {
         $reservation->update(['status' => 'cancelled']);
         return back()->with('success', 'Réservation #' . $reservation->id . ' annulée.');
     }

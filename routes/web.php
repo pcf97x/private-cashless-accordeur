@@ -37,6 +37,15 @@ Route::post('/acces', [AccessController::class, 'store']);
 
 /*
 |--------------------------------------------------------------------------
+| Devis (public — token-based, no auth)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/devis/{token}/accept', [ReservationController::class, 'acceptQuote'])->name('quote.accept');
+Route::get('/devis/{token}/decline', [ReservationController::class, 'declineQuote'])->name('quote.decline');
+
+/*
+|--------------------------------------------------------------------------
 | Reservation (public)
 |--------------------------------------------------------------------------
 */

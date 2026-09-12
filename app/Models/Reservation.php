@@ -25,6 +25,8 @@ class Reservation extends Model
         'status',
         'payment_method',
         'stripe_session_id',
+        'devis_token',
+        'devis_notes',
     ];
     protected $casts = [
         'start_at' => 'datetime',

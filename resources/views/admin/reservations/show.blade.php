@@ -19,6 +19,8 @@
                 <span class="badge badge-success text-sm !px-4 !py-1.5">Payée</span>
             @elseif($reservation->status === 'cancelled')
                 <span class="badge badge-danger text-sm !px-4 !py-1.5">Annulée</span>
+            @elseif($reservation->status === 'devis')
+                <span class="badge text-sm !px-4 !py-1.5" style="background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;">Devis</span>
             @else
                 <span class="badge badge-warning text-sm !px-4 !py-1.5">En attente</span>
             @endif
@@ -72,6 +74,27 @@
         </div>
     </div>
 
+    {{-- Devis info --}}
+    @if($reservation->devis_token)
+    <div class="card p-6 mb-6">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 pb-3 mb-4 border-b border-gray-100">Devis</h3>
+        <div class="space-y-3">
+            @if($reservation->devis_notes)
+            <div>
+                <div class="text-xs text-gray-500">Details du devis</div>
+                <div class="text-gray-900 whitespace-pre-line">{{ $reservation->devis_notes }}</div>
+            </div>
+            @endif
+            <div>
+                <div class="text-xs text-gray-500">Lien client</div>
+                <div class="flex items-center gap-2">
+                    <code class="text-xs bg-gray-100 rounded px-2 py-1 break-all">{{ url('/devis/' . $reservation->devis_token . '/accept') }}</code>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Actions --}}
     <div class="card p-6">
         <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 pb-3 mb-4 border-b border-gray-100">Actions</h3>
@@ -80,7 +103,7 @@
                 @csrf
                 <button type="submit" class="btn-outline">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    Renvoyer l'email
+                    {{ $reservation->status === 'devis' ? 'Renvoyer le devis' : 'Renvoyer l\'email' }}
                 </button>
             </form>
 
@@ -101,12 +124,12 @@
                 </form>
             @endif
 
-            @if ($reservation->status === 'paid')
-                <form method="POST" action="{{ route('admin.reservations.cancel', $reservation) }}" onsubmit="return confirm('Confirmer l\'annulation et le remboursement Stripe ?');">
+            @if (in_array($reservation->status, ['paid', 'devis']))
+                <form method="POST" action="{{ route('admin.reservations.cancel', $reservation) }}" onsubmit="return confirm('{{ $reservation->status === 'devis' ? 'Annuler ce devis ?' : 'Confirmer l\'annulation et le remboursement Stripe ?' }}');">
                     @csrf
                     <button type="submit" class="btn bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 border border-red-200">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Annuler & rembourser
+                        {{ $reservation->status === 'devis' ? 'Annuler le devis' : 'Annuler & rembourser' }}
                     </button>
                 </form>
             @endif

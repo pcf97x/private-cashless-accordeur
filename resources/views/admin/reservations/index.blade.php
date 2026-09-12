@@ -62,6 +62,8 @@
                                 <span class="badge badge-success">Payée</span>
                             @elseif($r->status === 'cancelled')
                                 <span class="badge badge-danger">Annulée</span>
+                            @elseif($r->status === 'devis')
+                                <span class="badge" style="background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;">Devis</span>
                             @else
                                 <span class="badge badge-warning">En attente</span>
                             @endif

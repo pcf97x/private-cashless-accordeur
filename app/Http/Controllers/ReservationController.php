@@ -333,4 +333,43 @@ return redirect()->route('reservation.pay', $reservation);
         // Option: tu peux mettre cancelled ici si tu veux.
         return view('reservation.cancel', compact('reservation'));
     }
+
+    public function acceptQuote(string $token)
+    {
+        $reservation = Reservation::where('devis_token', $token)->first();
+
+        if (!$reservation) {
+            return view('quote-response', ['action' => 'expired', 'reservation' => null]);
+        }
+
+        if ($reservation->status !== 'devis') {
+            $action = $reservation->status === 'cancelled' ? 'declined' : 'accepted';
+            return view('quote-response', ['action' => $action, 'reservation' => $reservation]);
+        }
+
+        $reservation->update([
+            'status' => 'pending',
+        ]);
+
+        $reservation->load('room');
+
+        Mail::to($reservation->email)->send(new ReservationConfirmed($reservation));
+
+        return view('quote-response', ['action' => 'accepted', 'reservation' => $reservation]);
+    }
+
+    public function declineQuote(string $token)
+    {
+        $reservation = Reservation::where('devis_token', $token)->first();
+
+        if (!$reservation) {
+            return view('quote-response', ['action' => 'expired', 'reservation' => null]);
+        }
+
+        if ($reservation->status === 'devis') {
+            $reservation->update(['status' => 'cancelled']);
+        }
+
+        return view('quote-response', ['action' => 'declined', 'reservation' => $reservation]);
+    }
 }

@@ -86,10 +86,11 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="status" class="form-label">Statut</label>
-                    <select name="status" id="status" required class="form-input" onchange="document.getElementById('payment_method_block').style.display = this.value === 'paid' ? 'block' : 'none'">
+                    <select name="status" id="status" required class="form-input" onchange="handleStatusChange(this.value)">
                         <option value="paid" {{ old('status', 'paid') === 'paid' ? 'selected' : '' }}>Paye</option>
                         <option value="gratuit" {{ old('status') === 'gratuit' ? 'selected' : '' }}>Gratuit (mise a disposition)</option>
                         <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>En attente de paiement</option>
+                        <option value="devis" {{ old('status') === 'devis' ? 'selected' : '' }}>Sur devis</option>
                     </select>
                     @error('status') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -106,12 +107,35 @@
                 </div>
             </div>
 
+            {{-- Devis / Prix custom --}}
+            <div id="devis_block" style="{{ old('status') === 'devis' ? '' : 'display:none' }}">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-4">
+                    <p class="text-sm text-blue-700 font-medium">Un email sera envoye au client avec un lien pour accepter ou refuser le devis.</p>
+                    <div>
+                        <label for="custom_price" class="form-label">Prix du devis (EUR)</label>
+                        <input type="number" step="0.01" min="0" name="custom_price" id="custom_price" class="form-input" placeholder="Laisser vide = tarif standard" value="{{ old('custom_price') }}">
+                    </div>
+                    <div>
+                        <label for="devis_notes" class="form-label">Details / commentaires (visibles par le client)</label>
+                        <textarea name="devis_notes" id="devis_notes" rows="3" class="form-input" placeholder="Ex: Tarif special evenement, inclut sono et micros...">{{ old('devis_notes') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <button type="submit" class="btn-primary">Creer la reservation</button>
+                <button type="submit" class="btn-primary" id="submit_btn">Creer la reservation</button>
                 <a href="{{ route('admin.reservations.index') }}" class="btn-ghost">Annuler</a>
             </div>
         </form>
     </div>
 
 </div>
+
+<script>
+function handleStatusChange(value) {
+    document.getElementById('payment_method_block').style.display = value === 'paid' ? 'block' : 'none';
+    document.getElementById('devis_block').style.display = value === 'devis' ? '' : 'none';
+    document.getElementById('submit_btn').textContent = value === 'devis' ? 'Creer et envoyer le devis' : 'Creer la reservation';
+}
+</script>
 @endsection
