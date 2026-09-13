@@ -69,6 +69,8 @@
                         <th class="px-3 py-2 text-left font-semibold text-gray-600">client</th>
                         <th class="px-3 py-2 text-left font-semibold text-gray-600">email</th>
                         <th class="px-3 py-2 text-left font-semibold text-gray-600">telephone</th>
+                        <th class="px-3 py-2 text-left font-semibold text-gray-600">evenement</th>
+                        <th class="px-3 py-2 text-left font-semibold text-gray-600">visibilite</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -79,6 +81,8 @@
                         <td class="px-3 py-2 text-gray-700">Jean Dupont</td>
                         <td class="px-3 py-2 text-gray-700">jean@mail.com</td>
                         <td class="px-3 py-2 text-gray-700">0694000000</td>
+                        <td class="px-3 py-2 text-gray-700">Reunion GUYACOOP</td>
+                        <td class="px-3 py-2 text-gray-700">public</td>
                     </tr>
                     <tr class="border-t">
                         <td class="px-3 py-2 text-gray-700">Salle 3</td>
@@ -87,12 +91,17 @@
                         <td class="px-3 py-2 text-gray-700">Marie Martin</td>
                         <td class="px-3 py-2 text-gray-700">marie@asso.org</td>
                         <td class="px-3 py-2 text-gray-700">0694111111</td>
+                        <td class="px-3 py-2 text-gray-700"></td>
+                        <td class="px-3 py-2 text-gray-700"></td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <p class="text-xs text-gray-400 mt-3">La colonne <strong>creneau</strong> accepte le code (AM, PM, FD) ou le libelle du creneau.</p>
+        <p class="text-xs text-gray-400 mt-3">
+            <strong>creneau</strong> : code (AM, PM, FD) ou libelle.
+            <strong>evenement</strong> et <strong>visibilite</strong> (public/private) sont optionnels.
+        </p>
     </div>
 
 </div>

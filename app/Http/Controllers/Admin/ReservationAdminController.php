@@ -172,6 +172,8 @@ class ReservationAdminController extends Controller
             $name = trim($row['client'] ?? $row['nom'] ?? '');
             $email = trim($row['email'] ?? '');
             $phone = trim($row['telephone'] ?? $row['tel'] ?? '');
+            $eventName = trim($row['evenement'] ?? $row['event'] ?? '');
+            $eventVisibility = trim($row['visibilite'] ?? $row['visibility'] ?? 'private');
 
             if (!$roomName || !$date || !$slotCode || !$name) {
                 $errors[] = "Ligne $lineNum : champs obligatoires manquants (salle, date, creneau, client)";
@@ -237,6 +239,8 @@ class ReservationAdminController extends Controller
                 'name' => $name,
                 'email' => $email ?: 'import@laccordeur.gf',
                 'phone' => $phone ?: '',
+                'event_name' => $eventName ?: null,
+                'event_visibility' => in_array($eventVisibility, ['public', 'private']) ? $eventVisibility : 'private',
                 'price' => $price,
                 'status' => $status,
                 'payment_method' => $paymentMethod,
