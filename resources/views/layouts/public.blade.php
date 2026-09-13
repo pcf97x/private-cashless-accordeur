@@ -275,7 +275,7 @@
                 {{-- Bottom bar --}}
                 <div class="border-t border-accordeur-800/50 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p class="text-accordeur-400 text-xs text-center sm:text-left">
-                        &copy; 2025 L'Accordeur. Géré par
+                        &copy; {{ date('Y') }} L'Accordeur. Géré par
                         <span class="text-accordeur-300 font-medium">APROSEP</span>.
                         Tous droits réservés.
                     </p>
