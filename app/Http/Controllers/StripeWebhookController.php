@@ -112,14 +112,9 @@ class StripeWebhookController extends Controller
                 try {
                     Mail::to($reservation->email)
                         ->send(new ReservationConfirmed($reservation));
-                    Mail::to(config('mail.from.address'))
+                    // Notification conciergerie (toutes les reservations)
+                    Mail::to(config('mail.conciergerie_address', 'laconciergerie@groupe-aprosep.com'))
                         ->send(new ReservationAdminNotification($reservation));
-
-                    // Notification conciergerie si besoins sur mesure
-                    if ($reservation->custom_needs) {
-                        Mail::to(config('mail.conciergerie_address', 'laconciergerie@groupe-aprosep.com'))
-                            ->send(new CustomNeedsNotification($reservation));
-                    }
                 } catch (\Exception $e) {
                     // Email peut échouer, on continue
                 }
