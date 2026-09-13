@@ -218,7 +218,7 @@
                                                             'bg-gray-300': res.status === 'cancelled',
                                                         }"
                                                     ></span>
-                                                    <span class="truncate" x-text="getRoomName(res.room_id)"></span>
+                                                    <span class="truncate" x-text="getResLabel(res)"></span>
                                                 </div>
                                             </template>
                                             <span
@@ -634,6 +634,13 @@ function planningCalendar() {
             return room ? room.name : '';
         },
 
+        getResLabel(res) {
+            if (res.event_name && res.event_visibility === 'public') {
+                return res.event_name;
+            }
+            return this.getRoomName(res.room_id) + (res.event_name ? ' — Réservé' : '');
+        },
+
         getEventsForDay(day) {
             const key = this.formatDateKey(day);
             return this.planningEvents.filter(e => {
@@ -747,7 +754,11 @@ function planningCalendar() {
 
                 if (res) {
                     status = res.status;
-                    statusLabel = res.status === 'confirmed' ? 'Réservé' : (res.status === 'pending' ? 'En attente' : 'Annulé');
+                    if (res.event_name && res.event_visibility === 'public') {
+                        statusLabel = res.event_name;
+                    } else {
+                        statusLabel = res.status === 'confirmed' ? 'Réservé' : (res.status === 'pending' ? 'En attente' : 'Annulé');
+                    }
                 } else if (blockedByFullDay) {
                     status = fullDayRes.status;
                     statusLabel = fullDayRes.status === 'confirmed' ? 'Réservé' : 'En attente';

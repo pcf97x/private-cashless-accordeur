@@ -21,6 +21,8 @@ class Reservation extends Model
         'name',
         'email',
         'phone',
+        'event_name',
+        'event_visibility',
         'price',
         'status',
         'payment_method',

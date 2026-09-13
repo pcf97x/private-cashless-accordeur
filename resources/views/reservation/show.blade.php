@@ -338,6 +338,33 @@
                                 <input type="text" name="phone" id="phone" class="form-input" placeholder="0694 00 00 00" value="{{ old('phone') }}" required>
                             </div>
 
+                            {{-- Event info --}}
+                            <div class="pt-3 border-t border-gray-100">
+                                <div>
+                                    <label for="event_name" class="form-label">Nom de l'événement (optionnel)</label>
+                                    <input type="text" name="event_name" id="event_name" class="form-input" placeholder="Ex: Réunion GUYACOOP, Soirée networking..." value="{{ old('event_name') }}">
+                                </div>
+                                <div class="mt-3" id="event_visibility_block" style="display: none;">
+                                    <label class="form-label">Affichage dans le planning</label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="event_visibility" value="public" class="text-accordeur-500 focus:ring-accordeur-500" {{ old('event_visibility', 'public') === 'public' ? 'checked' : '' }}>
+                                            <span class="text-sm text-gray-700">Public <span class="text-xs text-gray-400">(nom visible)</span></span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="event_visibility" value="private" class="text-accordeur-500 focus:ring-accordeur-500" {{ old('event_visibility') === 'private' ? 'checked' : '' }}>
+                                            <span class="text-sm text-gray-700">Privé <span class="text-xs text-gray-400">(affiche "Réservé")</span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <script>
+                            document.getElementById('event_name').addEventListener('input', function() {
+                                document.getElementById('event_visibility_block').style.display = this.value.trim() ? 'block' : 'none';
+                            });
+                            </script>
+
                             {{-- Submit --}}
                             <button type="submit" id="reserveBtn"
                                     :disabled="!canSubmit"

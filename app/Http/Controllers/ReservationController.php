@@ -174,6 +174,8 @@ public function store(Request $request)
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'event_name' => $request->event_name ?: null,
+            'event_visibility' => $request->event_name ? ($request->event_visibility ?: 'private') : 'private',
             'price' => $totalPrice,
             'status' => 'pending',
         ]);

@@ -70,6 +70,15 @@
                     <div class="text-xs text-gray-500">Téléphone</div>
                     <div class="text-gray-900">{{ $reservation->phone ?? '—' }}</div>
                 </div>
+                @if($reservation->event_name)
+                <div>
+                    <div class="text-xs text-gray-500">Evenement</div>
+                    <div class="font-semibold text-gray-900">{{ $reservation->event_name }}</div>
+                    <div class="text-xs {{ $reservation->event_visibility === 'public' ? 'text-emerald-600' : 'text-amber-600' }}">
+                        {{ $reservation->event_visibility === 'public' ? 'Public (visible dans le planning)' : 'Prive (affiche "Reserve")' }}
+                    </div>
+                </div>
+                @endif
                 @if($reservation->stripe_session_id)
                 <div>
                     <div class="text-xs text-gray-500">Session Stripe</div>

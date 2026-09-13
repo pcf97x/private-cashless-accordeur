@@ -89,6 +89,8 @@ class ReservationAdminController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'event_name' => $request->event_name ?: null,
+            'event_visibility' => $request->event_name ? ($request->event_visibility ?: 'private') : 'private',
             'price' => $price,
             'status' => $isDevis ? 'devis' : ($request->status === 'gratuit' ? 'paid' : $request->status),
             'payment_method' => $request->status === 'paid' ? $request->payment_method : ($request->status === 'gratuit' ? 'gratuit' : null),

@@ -64,6 +64,22 @@
 
             <hr class="border-gray-100">
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="event_name" class="form-label">Nom de l'evenement (optionnel)</label>
+                    <input type="text" name="event_name" id="event_name" class="form-input" placeholder="Ex: Reunion GUYACOOP..." value="{{ old('event_name') }}">
+                </div>
+                <div>
+                    <label for="event_visibility" class="form-label">Affichage planning</label>
+                    <select name="event_visibility" id="event_visibility" class="form-input">
+                        <option value="public" {{ old('event_visibility', 'public') === 'public' ? 'selected' : '' }}>Public (nom visible)</option>
+                        <option value="private" {{ old('event_visibility') === 'private' ? 'selected' : '' }}>Prive (affiche "Reserve")</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr class="border-gray-100">
+
             <div>
                 <label for="name" class="form-label">Nom complet du client</label>
                 <input type="text" name="name" id="name" required class="form-input" placeholder="Jean Dupont" value="{{ old('name') }}">
