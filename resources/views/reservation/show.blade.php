@@ -359,6 +359,13 @@
                                 </div>
                             </div>
 
+                            {{-- Besoins sur mesure --}}
+                            <div class="pt-3 border-t border-gray-100">
+                                <label for="custom_needs" class="form-label">Besoins specifiques / sur mesure (optionnel)</label>
+                                <textarea name="custom_needs" id="custom_needs" rows="2" class="form-input" placeholder="Ex: Sono + 2 micros, cocktail 50 personnes, ouverture a 7h...">{{ old('custom_needs') }}</textarea>
+                                <p class="text-xs text-gray-400 mt-1">Si renseigne, la conciergerie vous recontactera pour finaliser les details et options.</p>
+                            </div>
+
                             <script>
                             document.getElementById('event_name').addEventListener('input', function() {
                                 document.getElementById('event_visibility_block').style.display = this.value.trim() ? 'block' : 'none';

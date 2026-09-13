@@ -23,6 +23,7 @@ class Reservation extends Model
         'phone',
         'event_name',
         'event_visibility',
+        'custom_needs',
         'price',
         'status',
         'payment_method',

@@ -115,4 +115,6 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'conciergerie_address' => env('CONCIERGERIE_EMAIL', 'laconciergerie@groupe-aprosep.com'),
+
 ];

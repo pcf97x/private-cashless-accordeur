@@ -82,6 +82,12 @@
                     </div>
                 </div>
                 @endif
+                @if($reservation->custom_needs)
+                <div>
+                    <div class="text-xs text-gray-500">Besoins sur mesure</div>
+                    <div class="text-sm text-amber-700 bg-amber-50 rounded-lg p-2 mt-1 whitespace-pre-line">{{ $reservation->custom_needs }}</div>
+                </div>
+                @endif
                 @if($reservation->stripe_session_id)
                 <div>
                     <div class="text-xs text-gray-500">Session Stripe</div>
