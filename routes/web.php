@@ -119,6 +119,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/reservations/{reservation}/confirm-payment', [ReservationAdminController::class, 'confirmPayment'])->name('reservations.confirmPayment');
     Route::post('/reservations/{reservation}/cancel', [ReservationAdminController::class, 'cancelAndRefund'])->name('reservations.cancel');
     Route::post('/reservations/{reservation}/supplement', [ReservationAdminController::class, 'addSupplement'])->name('reservations.addSupplement');
+    Route::post('/reservations/{reservation}/discount', [ReservationAdminController::class, 'applyDiscount'])->name('reservations.applyDiscount');
+    Route::post('/reservations/{reservation}/remove-discount', [ReservationAdminController::class, 'removeDiscount'])->name('reservations.removeDiscount');
     Route::post('/supplements/{supplement}/resend', [ReservationAdminController::class, 'resendSupplementEmail'])->name('supplements.resend');
     Route::post('/supplements/{supplement}/confirm', [ReservationAdminController::class, 'confirmSupplement'])->name('supplements.confirm');
     Route::post('/supplements/{supplement}/cancel', [ReservationAdminController::class, 'cancelSupplement'])->name('supplements.cancel');

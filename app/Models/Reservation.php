@@ -27,6 +27,8 @@ class Reservation extends Model
         'stripe_session_id',
         'devis_token',
         'devis_notes',
+        'discount_amount',
+        'discount_label',
     ];
     protected $casts = [
         'start_at' => 'datetime',

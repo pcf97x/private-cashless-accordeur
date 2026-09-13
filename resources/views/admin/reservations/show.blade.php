@@ -46,7 +46,13 @@
                 </div>
                 <div>
                     <div class="text-xs text-gray-500">Prix</div>
-                    <div class="text-xl font-bold text-accordeur-600">{{ number_format($reservation->price, 2, ',', ' ') }} &euro;</div>
+                    @if($reservation->discount_amount > 0)
+                        <div class="text-sm text-gray-400 line-through">{{ number_format($reservation->price, 2, ',', ' ') }} &euro;</div>
+                        <div class="text-xl font-bold text-accordeur-600">{{ number_format($reservation->price - $reservation->discount_amount, 2, ',', ' ') }} &euro;</div>
+                        <div class="text-xs text-emerald-600 font-medium">{{ $reservation->discount_label }} (-{{ number_format($reservation->discount_amount, 2, ',', ' ') }} &euro;)</div>
+                    @else
+                        <div class="text-xl font-bold text-accordeur-600">{{ number_format($reservation->price, 2, ',', ' ') }} &euro;</div>
+                    @endif
                 </div>
             </div>
 
@@ -135,6 +141,48 @@
             @endif
         </div>
     </div>
+
+    {{-- Remise --}}
+    @if(in_array($reservation->status, ['paid', 'pending', 'devis']))
+    <div class="card p-6 mt-6">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 pb-3 mb-4 border-b border-gray-100">Remise</h3>
+
+        @if($reservation->discount_amount > 0)
+            <div class="flex items-center justify-between p-4 rounded-xl border border-emerald-200 bg-emerald-50/30 mb-4">
+                <div>
+                    <span class="font-semibold text-gray-900">{{ $reservation->discount_label }}</span>
+                    <span class="text-emerald-600 font-bold ml-2">-{{ number_format($reservation->discount_amount, 2, ',', ' ') }} &euro;</span>
+                </div>
+                <form method="POST" action="{{ route('admin.reservations.removeDiscount', $reservation) }}" onsubmit="return confirm('Supprimer la remise ?');">
+                    @csrf
+                    <button type="submit" class="btn !py-1 !px-2.5 !text-xs !rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">Supprimer</button>
+                </form>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('admin.reservations.applyDiscount', $reservation) }}" class="flex flex-wrap items-end gap-3" x-data="{ discountType: 'percent' }">
+            @csrf
+            <div>
+                <label class="form-label">Type</label>
+                <select name="discount_type" x-model="discountType" class="form-input !py-2 !text-sm">
+                    <option value="percent">Pourcentage (%)</option>
+                    <option value="fixed">Montant fixe (EUR)</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label" x-text="discountType === 'percent' ? 'Pourcentage' : 'Montant'"></label>
+                <input type="number" step="0.01" min="0" :max="discountType === 'percent' ? 100 : {{ $reservation->price }}" name="discount_value" required class="form-input !py-2 !text-sm !w-28" placeholder="10">
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="form-label">Motif (optionnel)</label>
+                <input type="text" name="discount_label" class="form-input !py-2 !text-sm" placeholder="Ex: Fidelite, Partenariat...">
+            </div>
+            <button type="submit" class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 !py-2">
+                Appliquer
+            </button>
+        </form>
+    </div>
+    @endif
 
     {{-- Supplements --}}
     @if(in_array($reservation->status, ['paid', 'pending']))

@@ -411,4 +411,41 @@ public function cancelSupplement(ReservationSupplement $supplement)
     return back()->with('success', 'Complement annule.');
 }
 
+// ─── Remise ────────────────────────────────────────────────
+
+public function applyDiscount(Request $request, Reservation $reservation)
+{
+    $request->validate([
+        'discount_type' => 'required|in:fixed,percent',
+        'discount_value' => 'required|numeric|min:0',
+        'discount_label' => 'nullable|string|max:255',
+    ]);
+
+    if ($request->discount_type === 'percent') {
+        $percent = min($request->discount_value, 100);
+        $amount = round($reservation->price * $percent / 100, 2);
+        $label = $request->discount_label ?: "Remise {$percent}%";
+    } else {
+        $amount = min($request->discount_value, $reservation->price);
+        $label = $request->discount_label ?: "Remise {$amount} EUR";
+    }
+
+    $reservation->update([
+        'discount_amount' => $amount,
+        'discount_label' => $label,
+    ]);
+
+    return back()->with('success', "Remise de " . number_format($amount, 2, ',', ' ') . " EUR appliquee.");
+}
+
+public function removeDiscount(Reservation $reservation)
+{
+    $reservation->update([
+        'discount_amount' => 0,
+        'discount_label' => null,
+    ]);
+
+    return back()->with('success', 'Remise supprimee.');
+}
+
 }
