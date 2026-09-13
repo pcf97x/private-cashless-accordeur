@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\PricingProfileController;
 use App\Http\Controllers\Admin\ReservationOptionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\PlanningEventController;
+use App\Http\Controllers\Admin\SettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -140,9 +141,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/rapports/pdf', [ReportController::class, 'exportPdf'])->name('reports.pdf');
 });
 
-// Utilisateurs (admin uniquement)
+// Utilisateurs + Parametres (admin uniquement)
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', UserController::class)->except(['show']);
+    Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::post('settings', [SettingController::class, 'update'])->name('settings.update');
 });
 
 require __DIR__.'/auth.php';

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\ReservationConfirmed;
 use App\Mail\ReservationAdminNotification;
-use App\Mail\CustomNeedsNotification;
+use App\Models\Setting;
 use Stripe\Webhook;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -113,7 +113,8 @@ class StripeWebhookController extends Controller
                     Mail::to($reservation->email)
                         ->send(new ReservationConfirmed($reservation));
                     // Notification conciergerie (toutes les reservations)
-                    Mail::to(config('mail.conciergerie_address', 'laconciergerie@groupe-aprosep.com'))
+                    $conciergerieEmails = array_map('trim', explode(',', Setting::get('conciergerie_email', 'laconciergerie@groupe-aprosep.com')));
+                    Mail::to($conciergerieEmails)
                         ->send(new ReservationAdminNotification($reservation));
                 } catch (\Exception $e) {
                     // Email peut échouer, on continue
