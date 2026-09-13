@@ -198,7 +198,7 @@
                                             <template x-for="ev in getEventsForDay(day)" :key="'ev'+ev.id">
                                                 <div class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight truncate" :style="'background-color:' + ev.color + '20; color:' + ev.color">
                                                     <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="'background-color:' + ev.color"></span>
-                                                    <span class="truncate" x-text="ev.title"></span>
+                                                    <span class="truncate" x-text="ev.visibility === 'public' ? ev.title : (ev.room_id ? getRoomName(ev.room_id) + ' — Reserve' : 'Reserve')"></span>
                                                 </div>
                                             </template>
                                             <template x-for="res in getReservationsForDay(day).slice(0, 3)" :key="res.id">
@@ -402,7 +402,13 @@
                                         </template>
 
                                         {{-- Info for booked slots --}}
-                                        <template x-if="slot.status === 'confirmed' || slot.status === 'pending'">
+                                        <template x-if="(slot.status === 'confirmed' || slot.status === 'pending') && slot.eventInfo">
+                                            <div class="mt-2">
+                                                <div class="text-xs font-semibold" :style="'color:' + slot.eventInfo.color" x-text="slot.eventInfo.title"></div>
+                                                <div x-show="slot.eventInfo.description" class="text-xs text-gray-500 mt-0.5" x-text="slot.eventInfo.description"></div>
+                                            </div>
+                                        </template>
+                                        <template x-if="(slot.status === 'confirmed' || slot.status === 'pending') && !slot.eventInfo">
                                             <div class="mt-2 text-xs text-gray-400">
                                                 Créneau réservé
                                             </div>
@@ -633,6 +639,25 @@ function planningCalendar() {
             });
         },
 
+        getEventsForRoomDay(roomId, dateKey) {
+            return this.planningEvents.filter(e => {
+                const eDate = e.date ? e.date.substring(0, 10) : '';
+                return eDate === dateKey && e.room_id === roomId;
+            });
+        },
+
+        isSlotBlockedByEvent(roomId, slotOrder, dateKey) {
+            const events = this.getEventsForRoomDay(roomId, dateKey);
+            return events.find(e => {
+                if (!e.time_slot_id) return true; // no slot = full day block
+                if (e.time_slot_id === slotOrder) return e;
+                // Check overlap: full day event blocks AM/PM, AM/PM blocks full day
+                if (e.time_slot_id === 3) return true; // event is full day
+                if (slotOrder === 3 && (e.time_slot_id === 1 || e.time_slot_id === 2)) return e;
+                return false;
+            });
+        },
+
         getDayStatus(day) {
             const res = this.getReservationsForDay(day);
             const active = res.filter(r => r.status !== 'cancelled');
@@ -694,6 +719,10 @@ function planningCalendar() {
 
                 let status = 'available';
                 let statusLabel = 'Disponible';
+                let eventInfo = null;
+
+                // Check if blocked by planning event
+                const blockingEvent = this.isSlotBlockedByEvent(roomId, slot.order, key);
 
                 if (res) {
                     status = res.status;
@@ -704,6 +733,14 @@ function planningCalendar() {
                 } else if (blockedByParts) {
                     status = 'confirmed';
                     statusLabel = 'Indisponible';
+                } else if (blockingEvent) {
+                    status = 'confirmed';
+                    if (blockingEvent.visibility === 'public') {
+                        statusLabel = blockingEvent.title;
+                        eventInfo = blockingEvent;
+                    } else {
+                        statusLabel = 'Réservé';
+                    }
                 }
 
                 return {
@@ -712,6 +749,7 @@ function planningCalendar() {
                     time: slot.time,
                     status: status,
                     statusLabel: statusLabel,
+                    eventInfo: eventInfo,
                 };
             });
         },

@@ -22,7 +22,8 @@
                         <th class="w-4"></th>
                         <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Evenement</th>
                         <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Date</th>
-                        <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Horaires</th>
+                        <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Salle</th>
+                        <th class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">Visibilite</th>
                         <th class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">Statut</th>
                         <th class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
                     </tr>
@@ -41,10 +42,20 @@
                             </td>
                             <td class="px-6 py-4 text-gray-700">{{ $event->date->format('d/m/Y') }}</td>
                             <td class="px-6 py-4 text-gray-700">
-                                @if($event->start_time && $event->end_time)
-                                    {{ \Carbon\Carbon::parse($event->start_time)->format('H\hi') }} - {{ \Carbon\Carbon::parse($event->end_time)->format('H\hi') }}
+                                @if($event->room)
+                                    {{ $event->room->name }}
+                                    @if($event->timeSlot)
+                                        <span class="text-xs text-gray-400">— {{ $event->timeSlot->label }}</span>
+                                    @endif
                                 @else
-                                    Toute la journee
+                                    <span class="text-gray-400">—</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                @if($event->visibility === 'public')
+                                    <span class="badge badge-success !text-[10px]">Public</span>
+                                @else
+                                    <span class="badge badge-warning !text-[10px]">Prive</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-center">

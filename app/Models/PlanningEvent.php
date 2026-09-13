@@ -14,10 +14,23 @@ class PlanningEvent extends Model
         'end_time',
         'color',
         'active',
+        'room_id',
+        'time_slot_id',
+        'visibility',
     ];
 
     protected $casts = [
         'date' => 'date',
         'active' => 'boolean',
     ];
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+    public function timeSlot()
+    {
+        return $this->belongsTo(TimeSlot::class);
+    }
 }
