@@ -29,8 +29,12 @@ class PublicController extends Controller
             ->where('date', '>=', now()->subMonths(1)->startOfMonth())
             ->get();
         $timeSlots = TimeSlot::where('active', true)->orderBy('order_index')->get();
+        $planningEvents = \App\Models\PlanningEvent::where('active', true)
+            ->where('date', '>=', now()->subMonths(1)->startOfMonth())
+            ->orderBy('date')
+            ->get();
 
-        return view('public.planning', compact('rooms', 'reservations', 'timeSlots'));
+        return view('public.planning', compact('rooms', 'reservations', 'timeSlots', 'planningEvents'));
     }
 
     public function ecosysteme()

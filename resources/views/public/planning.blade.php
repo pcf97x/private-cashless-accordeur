@@ -176,8 +176,11 @@
                                             ></span>
                                         </div>
 
-                                        {{-- Reservation dots (mobile) --}}
+                                        {{-- Event dots (mobile) --}}
                                         <div class="flex flex-wrap gap-0.5 sm:hidden mt-1">
+                                            <template x-for="ev in getEventsForDay(day)" :key="'ev'+ev.id">
+                                                <span class="w-2 h-2 rounded-full" :style="'background-color:' + ev.color"></span>
+                                            </template>
                                             <template x-for="res in getReservationsForDay(day).slice(0, 3)" :key="res.id">
                                                 <span
                                                     class="w-2 h-2 rounded-full"
@@ -188,15 +191,16 @@
                                                     }"
                                                 ></span>
                                             </template>
-                                            <span
-                                                x-show="getReservationsForDay(day).length > 3"
-                                                class="text-[10px] text-gray-400 font-medium"
-                                                x-text="'+' + (getReservationsForDay(day).length - 3)"
-                                            ></span>
                                         </div>
 
-                                        {{-- Reservation badges (desktop) --}}
+                                        {{-- Event badges (desktop) --}}
                                         <div class="hidden sm:flex flex-col gap-1 mt-1">
+                                            <template x-for="ev in getEventsForDay(day)" :key="'ev'+ev.id">
+                                                <div class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight truncate" :style="'background-color:' + ev.color + '20; color:' + ev.color">
+                                                    <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="'background-color:' + ev.color"></span>
+                                                    <span class="truncate" x-text="ev.title"></span>
+                                                </div>
+                                            </template>
                                             <template x-for="res in getReservationsForDay(day).slice(0, 3)" :key="res.id">
                                                 <div
                                                     class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight truncate"
@@ -245,6 +249,10 @@
             <div class="flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-gray-300"></span>
                 <span class="text-xs text-gray-500 font-medium">Annulée</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                <span class="text-xs text-gray-500 font-medium">Service / Evenement</span>
             </div>
             <div class="hidden sm:flex items-center gap-4 ml-auto">
                 <div class="flex items-center gap-2">
@@ -303,6 +311,32 @@
 
                 {{-- Panel body --}}
                 <div class="p-6">
+                    {{-- Services & Events --}}
+                    <template x-if="selectedDay && getEventsForDay(selectedDay).length > 0">
+                        <div class="mb-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                                </div>
+                                <h3 class="font-display font-bold text-gray-900">Services & Evenements</h3>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <template x-for="ev in getEventsForDay(selectedDay)" :key="'evd'+ev.id">
+                                    <div class="rounded-xl border-2 p-4" :style="'border-color:' + ev.color + '40; background-color:' + ev.color + '08'">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-3 h-3 rounded-full mt-1 shrink-0" :style="'background-color:' + ev.color"></div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-semibold text-gray-900 text-sm" x-text="ev.title"></p>
+                                                <p x-show="ev.start_time" class="text-xs text-gray-500 mt-0.5" x-text="(ev.start_time || '').substring(0,5) + (ev.end_time ? ' — ' + (ev.end_time || '').substring(0,5) : '')"></p>
+                                                <p x-show="ev.description" class="text-xs text-gray-600 mt-1" x-text="ev.description"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
                     {{-- Rooms grouped --}}
                     <template x-for="room in displayRooms" :key="room.id">
                         <div class="mb-6 last:mb-0">
@@ -420,6 +454,7 @@ function planningCalendar() {
         // Data from PHP
         reservations: @json($reservations),
         rooms: @json($rooms),
+        planningEvents: @json($planningEvents ?? []),
 
         // State
         currentDate: new Date(),
@@ -588,6 +623,14 @@ function planningCalendar() {
         getRoomName(roomId) {
             const room = this.rooms.find(r => r.id === roomId);
             return room ? room.name : '';
+        },
+
+        getEventsForDay(day) {
+            const key = this.formatDateKey(day);
+            return this.planningEvents.filter(e => {
+                const eDate = e.date ? e.date.substring(0, 10) : '';
+                return eDate === key;
+            });
         },
 
         getDayStatus(day) {

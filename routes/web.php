@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\EcosystemPartnerController;
 use App\Http\Controllers\Admin\PricingProfileController;
 use App\Http\Controllers\Admin\ReservationOptionController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\PlanningEventController;
 
 /*
 |--------------------------------------------------------------------------
@@ -131,6 +132,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('options', ReservationOptionController::class)->except(['show']);
     Route::post('options/reorder', [ReservationOptionController::class, 'reorder'])->name('options.reorder');
     Route::resource('ecosystem', EcosystemPartnerController::class)->except(['show']);
+    Route::resource('planning-events', PlanningEventController::class)->except(['show']);
 
     // Rapports de présence
     Route::get('/rapports', [ReportController::class, 'index'])->name('reports.index');
