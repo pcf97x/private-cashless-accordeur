@@ -38,11 +38,11 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label for="time_slot_id" class="form-label">Creneau</label>
-                    <select name="time_slot_id" id="time_slot_id" required class="form-input">
+                    <label for="time_slot_id" class="form-label">Creneau (tarification)</label>
+                    <select name="time_slot_id" id="time_slot_id" required class="form-input" onchange="prefillTimes(this)">
                         <option value="">Choisir un creneau...</option>
                         @foreach($timeSlots as $slot)
-                            <option value="{{ $slot->id }}" {{ old('time_slot_id') == $slot->id ? 'selected' : '' }}>
+                            <option value="{{ $slot->id }}" data-start="{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}" data-end="{{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}" {{ old('time_slot_id') == $slot->id ? 'selected' : '' }}>
                                 {{ $slot->label }} ({{ \Carbon\Carbon::parse($slot->start_time)->format('H\hi') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('H\hi') }})
                             </option>
                         @endforeach
@@ -59,6 +59,18 @@
                         @endforeach
                     </select>
                     @error('pricing_profile_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="custom_start" class="form-label">Heure debut reelle</label>
+                    <input type="time" name="custom_start" id="custom_start" class="form-input" value="{{ old('custom_start') }}">
+                    <p class="text-xs text-gray-400 mt-1">Laisser vide = horaire du creneau</p>
+                </div>
+                <div>
+                    <label for="custom_end" class="form-label">Heure fin reelle</label>
+                    <input type="time" name="custom_end" id="custom_end" class="form-input" value="{{ old('custom_end') }}">
                 </div>
             </div>
 
@@ -152,6 +164,13 @@ function handleStatusChange(value) {
     document.getElementById('payment_method_block').style.display = value === 'paid' ? 'block' : 'none';
     document.getElementById('devis_block').style.display = value === 'devis' ? '' : 'none';
     document.getElementById('submit_btn').textContent = value === 'devis' ? 'Creer et envoyer le devis' : 'Creer la reservation';
+}
+function prefillTimes(select) {
+    const opt = select.options[select.selectedIndex];
+    if (opt && opt.dataset.start) {
+        document.getElementById('custom_start').value = opt.dataset.start;
+        document.getElementById('custom_end').value = opt.dataset.end;
+    }
 }
 </script>
 @endsection

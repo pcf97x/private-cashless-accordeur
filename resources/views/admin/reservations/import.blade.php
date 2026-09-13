@@ -72,6 +72,8 @@
                         <th class="px-3 py-2 text-left font-semibold text-gray-600">profil</th>
                         <th class="px-3 py-2 text-left font-semibold text-gray-600">statut</th>
                         <th class="px-3 py-2 text-left font-semibold text-gray-600">reglement</th>
+                        <th class="px-3 py-2 text-left font-semibold text-gray-600">heure_debut</th>
+                        <th class="px-3 py-2 text-left font-semibold text-gray-600">heure_fin</th>
                         <th class="px-3 py-2 text-left font-semibold text-gray-600">evenement</th>
                         <th class="px-3 py-2 text-left font-semibold text-gray-600">visibilite</th>
                     </tr>
@@ -87,21 +89,24 @@
                         <td class="px-3 py-2 text-gray-700">ADHERENT</td>
                         <td class="px-3 py-2 text-gray-700">paye</td>
                         <td class="px-3 py-2 text-gray-700">virement</td>
+                        <td class="px-3 py-2 text-gray-700">7h</td>
+                        <td class="px-3 py-2 text-gray-700">12h</td>
                         <td class="px-3 py-2 text-gray-700">Concours educateurs</td>
                         <td class="px-3 py-2 text-gray-700">public</td>
                     </tr>
                     <tr class="border-t">
-                        <td class="px-3 py-2 text-gray-700">Salle 3</td>
-                        <td class="px-3 py-2 text-gray-700">16/09/2026</td>
+                        <td class="px-3 py-2 text-gray-700">Coworking</td>
+                        <td class="px-3 py-2 text-gray-700">04/09/2026</td>
                         <td class="px-3 py-2 text-gray-700">PM</td>
-                        <td class="px-3 py-2 text-gray-700">Marie Martin</td>
-                        <td class="px-3 py-2 text-gray-700">marie@asso.org</td>
+                        <td class="px-3 py-2 text-gray-700">EDEN</td>
+                        <td class="px-3 py-2 text-gray-700">eden@asso.org</td>
                         <td class="px-3 py-2 text-gray-700">0694111111</td>
                         <td class="px-3 py-2 text-gray-700"></td>
                         <td class="px-3 py-2 text-gray-700">gratuit</td>
-                        <td class="px-3 py-2 text-gray-700"></td>
-                        <td class="px-3 py-2 text-gray-700"></td>
-                        <td class="px-3 py-2 text-gray-700"></td>
+                        <td class="px-3 py-2 text-gray-700">18h30</td>
+                        <td class="px-3 py-2 text-gray-700">22h</td>
+                        <td class="px-3 py-2 text-gray-700">DEBAT</td>
+                        <td class="px-3 py-2 text-gray-700">public</td>
                     </tr>
                 </tbody>
             </table>
@@ -109,8 +114,9 @@
 
         <p class="text-xs text-gray-400 mt-3">
             Colonnes obligatoires : <strong>salle, date, creneau, client</strong>. Toutes les autres sont optionnelles.<br>
-            <strong>profil</strong> : code (ABONNE, ADHERENT...) ou libelle. <strong>statut</strong> : paye, attente, gratuit.
-            <strong>reglement</strong> : especes, carte, virement, cheque.
+            <strong>profil</strong> : code ou libelle. <strong>statut</strong> : paye, attente, gratuit.
+            <strong>reglement</strong> : especes, carte, virement, cheque.<br>
+            <strong>heure_debut / heure_fin</strong> : horaires reels (7h, 9h30, 18h30...). Si vide, utilise les heures du creneau.
         </p>
     </div>
 

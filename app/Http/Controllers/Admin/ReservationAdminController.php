@@ -74,8 +74,11 @@ class ReservationAdminController extends Controller
             $price = $request->status === 'gratuit' ? 0 : ($rate->price ?? 0);
         }
 
-        $startAt = $date->copy()->setTimeFromTimeString($timeSlot->start_time);
-        $endAt = $date->copy()->setTimeFromTimeString($timeSlot->end_time);
+        // Horaires : custom si renseigné, sinon du créneau
+        $startTime = $request->filled('custom_start') ? $request->custom_start : $timeSlot->start_time;
+        $endTime = $request->filled('custom_end') ? $request->custom_end : $timeSlot->end_time;
+        $startAt = $date->copy()->setTimeFromTimeString($startTime);
+        $endAt = $date->copy()->setTimeFromTimeString($endTime);
 
         $isDevis = $request->status === 'devis';
 
@@ -177,6 +180,8 @@ class ReservationAdminController extends Controller
             $rowProfile = trim($row['profil'] ?? '');
             $rowStatus = strtolower(trim($row['statut'] ?? $row['status'] ?? ''));
             $rowPayment = trim($row['reglement'] ?? $row['paiement'] ?? '');
+            $rowStartTime = trim($row['heure_debut'] ?? $row['debut'] ?? '');
+            $rowEndTime = trim($row['heure_fin'] ?? $row['fin'] ?? '');
 
             if (!$roomName || !$date || !$slotCode || !$name) {
                 $errors[] = "Ligne $lineNum : champs obligatoires manquants (salle, date, creneau, client)";
@@ -256,8 +261,16 @@ class ReservationAdminController extends Controller
             $paymentMethod = $status === 'paid' ? ($effectivePayment ?? 'autre') : null;
             if ($effectiveStatus === 'gratuit') $paymentMethod = 'gratuit';
 
-            $startAt = $parsedDate->copy()->setTimeFromTimeString($timeSlot->start_time);
-            $endAt = $parsedDate->copy()->setTimeFromTimeString($timeSlot->end_time);
+            // Horaires : custom si renseigné, sinon du créneau
+            $startTime = $rowStartTime ?: $timeSlot->start_time;
+            $endTime = $rowEndTime ?: $timeSlot->end_time;
+            // Normaliser les formats (9h → 09:00, 14h30 → 14:30)
+            $startTime = preg_replace('/^(\d{1,2})h(\d{2})?$/', '$1:${2}0', $startTime);
+            $startTime = preg_replace('/^(\d{1,2})h$/', '$1:00', $startTime);
+            $endTime = preg_replace('/^(\d{1,2})h(\d{2})?$/', '$1:${2}0', $endTime);
+            $endTime = preg_replace('/^(\d{1,2})h$/', '$1:00', $endTime);
+            $startAt = $parsedDate->copy()->setTimeFromTimeString($startTime);
+            $endAt = $parsedDate->copy()->setTimeFromTimeString($endTime);
 
             Reservation::create([
                 'room_id' => $room->id,

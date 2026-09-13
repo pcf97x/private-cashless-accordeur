@@ -42,7 +42,10 @@
                 </div>
                 <div>
                     <div class="text-xs text-gray-500">Créneau</div>
-                    <div class="font-semibold text-gray-900">{{ $reservation->timeSlot->start_time }} &rarr; {{ $reservation->timeSlot->end_time }}</div>
+                    <div class="font-semibold text-gray-900">{{ $reservation->start_at->format('H\hi') }} &rarr; {{ $reservation->end_at->format('H\hi') }}</div>
+                    @if($reservation->start_at->format('H:i') !== \Carbon\Carbon::parse($reservation->timeSlot->start_time)->format('H:i') || $reservation->end_at->format('H:i') !== \Carbon\Carbon::parse($reservation->timeSlot->end_time)->format('H:i'))
+                        <div class="text-xs text-gray-400">Tarif : {{ $reservation->timeSlot->label }}</div>
+                    @endif
                 </div>
                 <div>
                     <div class="text-xs text-gray-500">Prix</div>

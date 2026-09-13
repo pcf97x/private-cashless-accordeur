@@ -634,11 +634,25 @@ function planningCalendar() {
             return room ? room.name : '';
         },
 
+        getResTimeLabel(res) {
+            // Extract HH:MM from start_at datetime string
+            const start = res.start_at ? res.start_at.substring(11, 16) : '';
+            const end = res.end_at ? res.end_at.substring(11, 16) : '';
+            if (start && end) return start + '-' + end;
+            if (start) return start;
+            return '';
+        },
+
         getResLabel(res) {
+            const time = this.getResTimeLabel(res);
+            const timePrefix = time ? time + ' : ' : '';
             if (res.event_name && res.event_visibility === 'public') {
-                return res.event_name;
+                return timePrefix + res.event_name;
             }
-            return this.getRoomName(res.room_id) + (res.event_name ? ' — Réservé' : '');
+            if (res.event_name) {
+                return this.getRoomName(res.room_id) + ' — Réservé';
+            }
+            return timePrefix + this.getRoomName(res.room_id);
         },
 
         getEventsForDay(day) {
@@ -754,8 +768,11 @@ function planningCalendar() {
 
                 if (res) {
                     status = res.status;
+                    const resTime = this.getResTimeLabel(res);
                     if (res.event_name && res.event_visibility === 'public') {
-                        statusLabel = res.event_name;
+                        statusLabel = (resTime ? resTime + ' : ' : '') + res.event_name;
+                    } else if (res.event_name) {
+                        statusLabel = 'Réservé';
                     } else {
                         statusLabel = res.status === 'confirmed' ? 'Réservé' : (res.status === 'pending' ? 'En attente' : 'Annulé');
                     }
