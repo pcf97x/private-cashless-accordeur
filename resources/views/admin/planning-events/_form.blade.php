@@ -1,41 +1,37 @@
 <div class="space-y-5">
     <div>
         <label for="title" class="form-label">Titre</label>
-        <input type="text" name="title" id="title" required class="form-input" placeholder="Ex: Cours de yoga, Soiree networking..." value="{{ old('title', $event->title ?? '') }}">
+        <input type="text" name="title" id="title" required class="form-input" placeholder="Ex: DPJJ - Concours d'educateurs, Livraison oeufs..." value="{{ old('title', $event->title ?? '') }}">
         @error('title') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
     </div>
 
     <div>
         <label for="description" class="form-label">Description (optionnel)</label>
-        <textarea name="description" id="description" rows="3" class="form-input" placeholder="Details visibles dans le planning (si public)...">{{ old('description', $event->description ?? '') }}</textarea>
-        @error('description') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+        <textarea name="description" id="description" rows="2" class="form-input" placeholder="Details visibles dans le planning (si public)...">{{ old('description', $event->description ?? '') }}</textarea>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div>
             <label for="date" class="form-label">Date</label>
             <input type="date" name="date" id="date" required class="form-input" value="{{ old('date', isset($event) && $event->date ? $event->date->format('Y-m-d') : now()->toDateString()) }}">
-            @error('date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
         <div>
-            <label for="room_id" class="form-label">Salle (optionnel)</label>
+            <label for="start_time" class="form-label">Heure debut</label>
+            <input type="time" name="start_time" id="start_time" class="form-input" value="{{ old('start_time', isset($event) && $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('H:i') : '') }}" placeholder="07:00">
+        </div>
+        <div>
+            <label for="end_time" class="form-label">Heure fin</label>
+            <input type="time" name="end_time" id="end_time" class="form-input" value="{{ old('end_time', isset($event) && $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('H:i') : '') }}" placeholder="12:00">
+        </div>
+        <div>
+            <label for="room_id" class="form-label">Salle</label>
             <select name="room_id" id="room_id" class="form-input">
-                <option value="">Aucune salle</option>
+                <option value="">Service (pas de salle)</option>
                 @foreach($rooms as $room)
                     <option value="{{ $room->id }}" {{ old('room_id', $event->room_id ?? '') == $room->id ? 'selected' : '' }}>{{ $room->name }}</option>
                 @endforeach
             </select>
-        </div>
-        <div>
-            <label for="time_slot_id" class="form-label">Creneau (optionnel)</label>
-            <select name="time_slot_id" id="time_slot_id" class="form-input">
-                <option value="">Toute la journee</option>
-                @foreach($timeSlots as $slot)
-                    <option value="{{ $slot->id }}" {{ old('time_slot_id', $event->time_slot_id ?? '') == $slot->id ? 'selected' : '' }}>
-                        {{ $slot->label }} ({{ \Carbon\Carbon::parse($slot->start_time)->format('H\hi') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('H\hi') }})
-                    </option>
-                @endforeach
-            </select>
+            <p class="text-xs text-gray-400 mt-1">Sans salle = ligne "Services" du planning</p>
         </div>
     </div>
 
@@ -46,7 +42,6 @@
                 <option value="public" {{ old('visibility', $event->visibility ?? 'public') === 'public' ? 'selected' : '' }}>Public (nom visible)</option>
                 <option value="private" {{ old('visibility', $event->visibility ?? '') === 'private' ? 'selected' : '' }}>Prive (affiche "Reserve")</option>
             </select>
-            <p class="text-xs text-gray-400 mt-1">Public : le titre s'affiche. Prive : affiche seulement "Reserve".</p>
         </div>
         <div>
             <label for="color" class="form-label">Couleur</label>

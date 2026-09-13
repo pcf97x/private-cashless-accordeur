@@ -198,7 +198,7 @@
                                             <template x-for="ev in getEventsForDay(day)" :key="'ev'+ev.id">
                                                 <div class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight truncate" :style="'background-color:' + ev.color + '20; color:' + ev.color">
                                                     <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="'background-color:' + ev.color"></span>
-                                                    <span class="truncate" x-text="ev.visibility === 'public' ? ev.title : (ev.room_id ? getRoomName(ev.room_id) + ' — Reserve' : 'Reserve')"></span>
+                                                    <span class="truncate" x-text="ev.visibility === 'public' ? ((ev.start_time ? (ev.start_time || '').substring(0,5) + ' ' : '') + ev.title) : (ev.room_id ? getRoomName(ev.room_id) + ' — Reserve' : 'Reserve')"></span>
                                                 </div>
                                             </template>
                                             <template x-for="res in getReservationsForDay(day).slice(0, 3)" :key="res.id">
@@ -311,24 +311,24 @@
 
                 {{-- Panel body --}}
                 <div class="p-6">
-                    {{-- Services & Events --}}
-                    <template x-if="selectedDay && getEventsForDay(selectedDay).length > 0">
+                    {{-- Services (events without room) --}}
+                    <template x-if="selectedDay && getServiceEventsForDay(selectedDay).length > 0">
                         <div class="mb-6">
                             <div class="flex items-center gap-3 mb-3">
-                                <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                                <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
                                 </div>
-                                <h3 class="font-display font-bold text-gray-900">Services & Evenements</h3>
+                                <h3 class="font-display font-bold text-gray-900">Services</h3>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                <template x-for="ev in getEventsForDay(selectedDay)" :key="'evd'+ev.id">
+                                <template x-for="ev in getServiceEventsForDay(selectedDay)" :key="'evs'+ev.id">
                                     <div class="rounded-xl border-2 p-4" :style="'border-color:' + ev.color + '40; background-color:' + ev.color + '08'">
                                         <div class="flex items-start gap-3">
                                             <div class="w-3 h-3 rounded-full mt-1 shrink-0" :style="'background-color:' + ev.color"></div>
                                             <div class="flex-1 min-w-0">
-                                                <p class="font-semibold text-gray-900 text-sm" x-text="ev.title"></p>
+                                                <p class="font-semibold text-gray-900 text-sm" x-text="ev.visibility === 'public' ? ev.title : 'Service'"></p>
                                                 <p x-show="ev.start_time" class="text-xs text-gray-500 mt-0.5" x-text="(ev.start_time || '').substring(0,5) + (ev.end_time ? ' — ' + (ev.end_time || '').substring(0,5) : '')"></p>
-                                                <p x-show="ev.description" class="text-xs text-gray-600 mt-1" x-text="ev.description"></p>
+                                                <p x-show="ev.description && ev.visibility === 'public'" class="text-xs text-gray-600 mt-1" x-text="ev.description"></p>
                                             </div>
                                         </div>
                                     </div>
@@ -404,7 +404,10 @@
                                         {{-- Info for booked slots --}}
                                         <template x-if="(slot.status === 'confirmed' || slot.status === 'pending') && slot.eventInfo">
                                             <div class="mt-2">
-                                                <div class="text-xs font-semibold" :style="'color:' + slot.eventInfo.color" x-text="slot.eventInfo.title"></div>
+                                                <div class="text-xs font-semibold" :style="'color:' + slot.eventInfo.color">
+                                                    <span x-show="slot.eventInfo.start_time" x-text="(slot.eventInfo.start_time || '').substring(0,5) + (slot.eventInfo.end_time ? '-' + (slot.eventInfo.end_time || '').substring(0,5) : '') + ' : '"></span>
+                                                    <span x-text="slot.eventInfo.title"></span>
+                                                </div>
                                                 <div x-show="slot.eventInfo.description" class="text-xs text-gray-500 mt-0.5" x-text="slot.eventInfo.description"></div>
                                             </div>
                                         </template>
@@ -646,15 +649,33 @@ function planningCalendar() {
             });
         },
 
+        // Time slots with their actual times for overlap checking
+        slotTimes: @json($timeSlots->map(fn($s) => ['id' => $s->id, 'start' => $s->start_time, 'end' => $s->end_time])),
+
+        timesOverlap(startA, endA, startB, endB) {
+            return startA < endB && endA > startB;
+        },
+
         isSlotBlockedByEvent(roomId, slotOrder, dateKey) {
             const events = this.getEventsForRoomDay(roomId, dateKey);
+            const slotDef = this.slotTimes.find(s => s.id === slotOrder);
+            if (!slotDef) return false;
+
             return events.find(e => {
-                if (!e.time_slot_id) return true; // no slot = full day block
-                if (e.time_slot_id === slotOrder) return e;
-                // Check overlap: full day event blocks AM/PM, AM/PM blocks full day
-                if (e.time_slot_id === 3) return true; // event is full day
-                if (slotOrder === 3 && (e.time_slot_id === 1 || e.time_slot_id === 2)) return e;
-                return false;
+                // No times on event = blocks all day
+                if (!e.start_time && !e.end_time) return true;
+                // Check time overlap
+                const evStart = (e.start_time || '00:00:00').substring(0, 8);
+                const evEnd = (e.end_time || '23:59:59').substring(0, 8);
+                return this.timesOverlap(evStart, evEnd, slotDef.start, slotDef.end);
+            });
+        },
+
+        getServiceEventsForDay(day) {
+            const key = this.formatDateKey(day);
+            return this.planningEvents.filter(e => {
+                const eDate = e.date ? e.date.substring(0, 10) : '';
+                return eDate === key && !e.room_id;
             });
         },
 

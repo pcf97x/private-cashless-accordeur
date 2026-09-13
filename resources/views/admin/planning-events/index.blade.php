@@ -44,11 +44,11 @@
                             <td class="px-6 py-4 text-gray-700">
                                 @if($event->room)
                                     {{ $event->room->name }}
-                                    @if($event->timeSlot)
-                                        <span class="text-xs text-gray-400">— {{ $event->timeSlot->label }}</span>
-                                    @endif
                                 @else
-                                    <span class="text-gray-400">—</span>
+                                    <span class="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Service</span>
+                                @endif
+                                @if($event->start_time)
+                                    <span class="text-xs text-gray-400 ml-1">{{ \Carbon\Carbon::parse($event->start_time)->format('H\hi') }}{{ $event->end_time ? ' - '.\Carbon\Carbon::parse($event->end_time)->format('H\hi') : '' }}</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-center">
