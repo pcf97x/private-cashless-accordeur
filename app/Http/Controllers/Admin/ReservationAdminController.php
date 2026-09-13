@@ -174,6 +174,9 @@ class ReservationAdminController extends Controller
             $phone = trim($row['telephone'] ?? $row['tel'] ?? '');
             $eventName = trim($row['evenement'] ?? $row['event'] ?? '');
             $eventVisibility = trim($row['visibilite'] ?? $row['visibility'] ?? 'private');
+            $rowProfile = trim($row['profil'] ?? '');
+            $rowStatus = strtolower(trim($row['statut'] ?? $row['status'] ?? ''));
+            $rowPayment = trim($row['reglement'] ?? $row['paiement'] ?? '');
 
             if (!$roomName || !$date || !$slotCode || !$name) {
                 $errors[] = "Ligne $lineNum : champs obligatoires manquants (salle, date, creneau, client)";
@@ -215,16 +218,43 @@ class ReservationAdminController extends Controller
                 continue;
             }
 
-            $profile = PricingProfile::where('active', true)->first();
+            // Profil : par ligne ou par defaut
+            if ($rowProfile) {
+                $profile = PricingProfile::where('active', true)
+                    ->where(function ($q) use ($rowProfile) {
+                        $q->where('code', strtoupper($rowProfile))
+                          ->orWhere('label', 'LIKE', "%$rowProfile%");
+                    })->first();
+                if (!$profile) {
+                    $errors[] = "Ligne $lineNum : profil '$rowProfile' introuvable";
+                    $skipped++;
+                    continue;
+                }
+            } else {
+                $profile = PricingProfile::where('active', true)->first();
+            }
+
             $rate = RoomRate::where('room_id', $room->id)
                 ->where('time_slot_id', $timeSlot->id)
                 ->where('pricing_profile_id', $profile->id)
                 ->first();
 
-            $status = $request->default_status === 'gratuit' ? 'paid' : $request->default_status;
-            $price = $request->default_status === 'gratuit' ? 0 : ($rate->price ?? 0);
-            $paymentMethod = $status === 'paid' ? ($request->default_payment_method ?? 'autre') : null;
-            if ($request->default_status === 'gratuit') $paymentMethod = 'gratuit';
+            // Statut : par ligne ou par defaut
+            $statusMap = [
+                'paye' => 'paid', 'payee' => 'paid', 'paid' => 'paid',
+                'attente' => 'pending', 'pending' => 'pending', 'en attente' => 'pending',
+                'gratuit' => 'gratuit',
+                'annule' => 'cancelled', 'annulee' => 'cancelled', 'cancelled' => 'cancelled',
+            ];
+            $effectiveStatus = $rowStatus ? ($statusMap[$rowStatus] ?? $request->default_status) : $request->default_status;
+
+            $status = $effectiveStatus === 'gratuit' ? 'paid' : $effectiveStatus;
+            $price = $effectiveStatus === 'gratuit' ? 0 : ($rate->price ?? 0);
+
+            // Reglement : par ligne ou par defaut
+            $effectivePayment = $rowPayment ?: $request->default_payment_method;
+            $paymentMethod = $status === 'paid' ? ($effectivePayment ?? 'autre') : null;
+            if ($effectiveStatus === 'gratuit') $paymentMethod = 'gratuit';
 
             $startAt = $parsedDate->copy()->setTimeFromTimeString($timeSlot->start_time);
             $endAt = $parsedDate->copy()->setTimeFromTimeString($timeSlot->end_time);
