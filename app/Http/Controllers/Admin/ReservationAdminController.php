@@ -225,7 +225,15 @@ class ReservationAdminController extends Controller
                 continue;
             }
 
-            $timeSlot = TimeSlot::where('code', $slotCode)
+            // Alias courants
+            $slotAliases = [
+                'FD' => 'FULL_DAY', 'JC' => 'FULL_DAY', 'JOURNEE' => 'FULL_DAY',
+                'MATIN' => 'AM', 'APREM' => 'PM', 'APRESMIDI' => 'PM',
+            ];
+            $normalizedSlot = $slotAliases[strtoupper($slotCode)] ?? $slotCode;
+
+            $timeSlot = TimeSlot::where('code', $normalizedSlot)
+                ->orWhere('code', $slotCode)
                 ->orWhere('label', 'LIKE', "%$slotCode%")
                 ->first();
             if (!$timeSlot) {
