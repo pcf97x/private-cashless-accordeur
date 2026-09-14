@@ -5,7 +5,7 @@
 
         <img
             class="mx-auto mt-4"
-            src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ $checkin->qr_token }}"
+            src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ $checkin->weez_ticket_code ?? $checkin->qr_token }}"
         >
     </div>
 </x-guest-layout>

@@ -29,14 +29,22 @@
     <div class="bg-white shadow rounded-lg p-6">
         <h2 class="font-semibold mb-3">QR Code</h2>
 
-        @if($lastCheckin && $lastCheckin->qr_token)
+        @if($lastCheckin && ($lastCheckin->weez_ticket_code || $lastCheckin->qr_token))
+            @php
+                $qrData = $lastCheckin->weez_ticket_code ?? $lastCheckin->qr_token;
+            @endphp
             <img
-                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ $lastCheckin->qr_token }}"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ $qrData }}"
                 alt="QR Code"
                 class="border p-2"
             >
             <p class="text-xs text-gray-500 mt-2">
-                Token : {{ $lastCheckin->qr_token }}
+                @if($lastCheckin->weez_ticket_code)
+                    Weezevent : {{ $lastCheckin->weez_ticket_code }}
+                @else
+                    Token interne : {{ $lastCheckin->qr_token }}
+                    <span class="text-amber-600 font-medium">(pas de billet Weezevent)</span>
+                @endif
             </p>
         @else
             <p class="text-sm text-gray-500">Aucun QR code disponible</p>
