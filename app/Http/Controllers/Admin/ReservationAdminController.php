@@ -291,13 +291,8 @@ class ReservationAdminController extends Controller
             if ($effectiveStatus === 'gratuit') $paymentMethod = 'gratuit';
 
             // Horaires : custom si renseigné, sinon du créneau
-            $startTime = $rowStartTime ?: $timeSlot->start_time;
-            $endTime = $rowEndTime ?: $timeSlot->end_time;
-            // Normaliser les formats (9h → 09:00, 14h30 → 14:30)
-            $startTime = preg_replace('/^(\d{1,2})h(\d{2})?$/', '$1:${2}0', $startTime);
-            $startTime = preg_replace('/^(\d{1,2})h$/', '$1:00', $startTime);
-            $endTime = preg_replace('/^(\d{1,2})h(\d{2})?$/', '$1:${2}0', $endTime);
-            $endTime = preg_replace('/^(\d{1,2})h$/', '$1:00', $endTime);
+            $startTime = $this->normalizeTime($rowStartTime ?: $timeSlot->start_time);
+            $endTime = $this->normalizeTime($rowEndTime ?: $timeSlot->end_time);
             $startAt = $parsedDate->copy()->setTimeFromTimeString($startTime);
             $endAt = $parsedDate->copy()->setTimeFromTimeString($endTime);
 
@@ -525,6 +520,24 @@ public function removeDiscount(Reservation $reservation)
     ]);
 
     return back()->with('success', 'Remise supprimee.');
+}
+
+private function normalizeTime(string $time): string
+{
+    $time = trim($time);
+    // Already HH:MM or HH:MM:SS
+    if (preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $time)) {
+        return $time;
+    }
+    // 14h30, 9h30, 18h30
+    if (preg_match('/^(\d{1,2})h(\d{1,2})$/', $time, $m)) {
+        return $m[1] . ':' . str_pad($m[2], 2, '0', STR_PAD_LEFT);
+    }
+    // 14h, 9h
+    if (preg_match('/^(\d{1,2})h$/', $time, $m)) {
+        return $m[1] . ':00';
+    }
+    return $time;
 }
 
 }
