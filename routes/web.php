@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ReservationOptionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\PlanningEventController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\InvoiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -126,6 +127,22 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/supplements/{supplement}/resend', [ReservationAdminController::class, 'resendSupplementEmail'])->name('supplements.resend');
     Route::post('/supplements/{supplement}/confirm', [ReservationAdminController::class, 'confirmSupplement'])->name('supplements.confirm');
     Route::post('/supplements/{supplement}/cancel', [ReservationAdminController::class, 'cancelSupplement'])->name('supplements.cancel');
+
+    // Factures
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+    Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
+    Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
+    Route::post('/invoices/{invoice}/lines', [InvoiceController::class, 'addLine'])->name('invoices.addLine');
+    Route::delete('/invoices/lines/{line}', [InvoiceController::class, 'removeLine'])->name('invoices.removeLine');
+    Route::post('/invoices/{invoice}/devis-sent', [InvoiceController::class, 'markDevisSent'])->name('invoices.devisSent');
+    Route::post('/invoices/{invoice}/deposit', [InvoiceController::class, 'recordDeposit'])->name('invoices.deposit');
+    Route::post('/invoices/{invoice}/mark-sent', [InvoiceController::class, 'markSent'])->name('invoices.markSent');
+    Route::post('/invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.markPaid');
+    Route::post('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+    Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
 
     // Profils tarifaires, Options, Ecosystème
     Route::resource('pricing-profiles', PricingProfileController::class)->except(['show']);

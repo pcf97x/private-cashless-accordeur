@@ -26,6 +26,43 @@
                 @error('admin_email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
+            <hr class="border-gray-100">
+
+            <h3 class="text-sm font-bold text-gray-700">Facturation — Infos entreprise (PDF)</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="form-label">Nom de l'entreprise</label>
+                    <input type="text" name="invoice_company_name" class="form-input" value="{{ old('invoice_company_name', $settings['invoice_company_name']) }}">
+                </div>
+                <div>
+                    <label class="form-label">SIRET</label>
+                    <input type="text" name="invoice_company_siret" class="form-input" value="{{ old('invoice_company_siret', $settings['invoice_company_siret']) }}">
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label">Adresse</label>
+                <textarea name="invoice_company_address" rows="2" class="form-input">{{ old('invoice_company_address', $settings['invoice_company_address']) }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="form-label">Telephone</label>
+                    <input type="text" name="invoice_company_phone" class="form-input" value="{{ old('invoice_company_phone', $settings['invoice_company_phone']) }}">
+                </div>
+                <div>
+                    <label class="form-label">Email facturation</label>
+                    <input type="text" name="invoice_company_email" class="form-input" value="{{ old('invoice_company_email', $settings['invoice_company_email']) }}">
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label">Informations de paiement (RIB, IBAN...)</label>
+                <textarea name="invoice_payment_info" rows="3" class="form-input" placeholder="IBAN : FR76 ...&#10;BIC : ...&#10;Banque : ...">{{ old('invoice_payment_info', $settings['invoice_payment_info']) }}</textarea>
+                <p class="text-xs text-gray-400 mt-1">Affiche en bas de la facture PDF.</p>
+            </div>
+
             <div class="pt-4 border-t border-gray-100">
                 <button type="submit" class="btn-primary">Enregistrer</button>
             </div>

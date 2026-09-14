@@ -315,6 +315,7 @@ class ReservationAdminController extends Controller
         'timeSlot',
         'pricingProfile',
         'supplements',
+        'invoices',
     ]);
 
     return view('admin.reservations.show', compact('reservation'));
