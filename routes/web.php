@@ -103,6 +103,8 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // Contacts
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/import', [ContactController::class, 'importForm'])->name('contacts.import.form');
+    Route::post('/contacts/import', [ContactController::class, 'import'])->name('contacts.import');
     Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
 
     // Salles, Créneaux, Tarifs
