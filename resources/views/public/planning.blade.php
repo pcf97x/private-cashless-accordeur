@@ -84,30 +84,30 @@
                     </template>
                 </div>
 
-                {{-- Month navigation --}}
                 <div class="flex items-center gap-2">
+                    {{-- View toggle --}}
+                    <div class="flex bg-gray-100 rounded-xl p-0.5 mr-2">
+                        <button @click="viewMode = 'week'" :class="viewMode === 'week' ? 'bg-white shadow text-accordeur-700' : 'text-gray-500 hover:text-gray-700'" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">Semaine</button>
+                        <button @click="viewMode = 'month'" :class="viewMode === 'month' ? 'bg-white shadow text-accordeur-700' : 'text-gray-500 hover:text-gray-700'" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">Mois</button>
+                    </div>
+
+                    {{-- Navigation --}}
                     <button
-                        @click="prevMonth()"
+                        @click="viewMode === 'week' ? prevWeek() : prevMonth()"
                         class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-accordeur-50 hover:text-accordeur-600 flex items-center justify-center transition-all duration-200"
-                        aria-label="Mois précédent"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                        </svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     </button>
 
                     <div class="px-4 py-2 min-w-[180px] text-center">
-                        <span class="text-lg font-display font-bold text-gray-900" x-text="monthYearLabel"></span>
+                        <span class="text-lg font-display font-bold text-gray-900" x-text="viewMode === 'week' ? weekLabel : monthYearLabel"></span>
                     </div>
 
                     <button
-                        @click="nextMonth()"
+                        @click="viewMode === 'week' ? nextWeek() : nextMonth()"
                         class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-accordeur-50 hover:text-accordeur-600 flex items-center justify-center transition-all duration-200"
-                        aria-label="Mois suivant"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </button>
 
                     <button
@@ -122,9 +122,71 @@
 
 
         {{-- =============================== --}}
-        {{-- CALENDAR GRID                    --}}
+        {{-- WEEKLY GRID VIEW (Excel-like)    --}}
         {{-- =============================== --}}
-        <div class="card overflow-hidden">
+        <div x-show="viewMode === 'week'" x-transition class="card overflow-hidden mb-8">
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-accordeur-600">
+                            <th class="px-3 py-3 text-left text-white font-bold text-sm min-w-[140px] sticky left-0 bg-accordeur-600 z-10"></th>
+                            <template x-for="d in weekDays" :key="d.key">
+                                <th class="px-2 py-3 text-center text-white font-bold text-sm min-w-[140px]" :class="isToday(d.date) ? 'bg-accordeur-700' : ''">
+                                    <div x-text="d.dayName"></div>
+                                    <div class="text-accordeur-200 font-normal text-xs" x-text="d.dayNum"></div>
+                                </th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{-- Room rows --}}
+                        <template x-for="room in displayRooms" :key="'wr'+room.id">
+                            <tr class="border-t border-gray-100">
+                                <td class="px-3 py-2 font-semibold text-gray-900 bg-gray-50 sticky left-0 z-10 border-r border-gray-200 align-top">
+                                    <div x-text="room.name" class="text-sm"></div>
+                                </td>
+                                <template x-for="d in weekDays" :key="'wr'+room.id+d.key">
+                                    <td class="px-1.5 py-1.5 align-top border-r border-gray-100 min-h-[60px]" :class="isToday(d.date) ? 'bg-accordeur-50/30' : ''">
+                                        <template x-for="item in getWeekCellItems(room.id, d.key)" :key="item.id">
+                                            <div class="mb-1 px-1.5 py-1 rounded text-[10px] leading-tight truncate"
+                                                :class="{
+                                                    'bg-emerald-50 text-emerald-800 border-l-2 border-emerald-400': item.type === 'confirmed',
+                                                    'bg-amber-50 text-amber-800 border-l-2 border-amber-400': item.type === 'pending',
+                                                    'bg-purple-50 text-purple-800 border-l-2 border-purple-400': item.type === 'event',
+                                                    'bg-gray-50 text-gray-400 border-l-2 border-gray-300 line-through': item.type === 'cancelled',
+                                                }"
+                                                :title="item.full"
+                                                x-text="item.label"
+                                            ></div>
+                                        </template>
+                                    </td>
+                                </template>
+                            </tr>
+                        </template>
+
+                        {{-- Services row --}}
+                        <tr class="border-t-2 border-amber-200">
+                            <td class="px-3 py-2 font-bold text-amber-700 bg-amber-50 sticky left-0 z-10 border-r border-gray-200 align-top text-sm">SERVICES</td>
+                            <template x-for="d in weekDays" :key="'ws'+d.key">
+                                <td class="px-1.5 py-1.5 align-top border-r border-gray-100 bg-amber-50/20" :class="isToday(d.date) ? 'bg-amber-50/50' : ''">
+                                    <template x-for="ev in getServiceEventsForDayByKey(d.key)" :key="'wse'+ev.id">
+                                        <div class="mb-1 px-1.5 py-1 rounded text-[10px] leading-tight bg-purple-50 text-purple-800 border-l-2 border-purple-400 truncate"
+                                            :title="ev.title"
+                                            x-text="(ev.start_time ? (ev.start_time || '').substring(0,5) + ' : ' : '') + (ev.visibility === 'public' ? ev.title : 'Service')"
+                                        ></div>
+                                    </template>
+                                </td>
+                            </template>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- =============================== --}}
+        {{-- MONTHLY CALENDAR GRID            --}}
+        {{-- =============================== --}}
+        <div x-show="viewMode === 'month'" x-transition class="card overflow-hidden">
 
             {{-- Day headers --}}
             <div class="grid grid-cols-7 bg-accordeur-600">
@@ -466,7 +528,9 @@ function planningCalendar() {
         planningEvents: @json($planningEvents ?? []),
 
         // State
+        viewMode: 'week',
         currentDate: new Date(),
+        weekStart: (() => { const n = new Date(); const d = n.getDay(); n.setDate(n.getDate() - (d === 0 ? 6 : d - 1)); n.setHours(0,0,0,0); return n; })(),
         selectedDay: null,
         selectedRoom: null,
 
@@ -487,7 +551,36 @@ function planningCalendar() {
             'Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'
         ],
 
+        shortDayNames: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+
         // ---- Computed ----
+
+        get weekLabel() {
+            if (!this.weekStart) return '';
+            const end = new Date(this.weekStart);
+            end.setDate(end.getDate() + 6);
+            const s = this.weekStart;
+            if (s.getMonth() === end.getMonth()) {
+                return s.getDate() + ' - ' + end.getDate() + ' ' + this.monthNames[s.getMonth()] + ' ' + s.getFullYear();
+            }
+            return s.getDate() + ' ' + this.monthNames[s.getMonth()] + ' - ' + end.getDate() + ' ' + this.monthNames[end.getMonth()] + ' ' + end.getFullYear();
+        },
+
+        get weekDays() {
+            if (!this.weekStart) return [];
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(this.weekStart);
+                d.setDate(d.getDate() + i);
+                days.push({
+                    date: d,
+                    key: this.formatDateKey(d),
+                    dayName: this.shortDayNames[d.getDay()],
+                    dayNum: d.getDate() + '/' + (d.getMonth() + 1),
+                });
+            }
+            return days;
+        },
 
         get monthYearLabel() {
             return this.monthNames[this.currentDate.getMonth()] + ' ' + this.currentDate.getFullYear();
@@ -555,6 +648,74 @@ function planningCalendar() {
 
         // ---- Methods ----
 
+        initWeek() {
+            const now = new Date();
+            const dow = now.getDay();
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+            monday.setHours(0, 0, 0, 0);
+            this.weekStart = monday;
+        },
+
+        prevWeek() {
+            const d = new Date(this.weekStart);
+            d.setDate(d.getDate() - 7);
+            this.weekStart = d;
+        },
+
+        nextWeek() {
+            const d = new Date(this.weekStart);
+            d.setDate(d.getDate() + 7);
+            this.weekStart = d;
+        },
+
+        getWeekCellItems(roomId, dateKey) {
+            const items = [];
+
+            // Reservations
+            const res = this.reservations.filter(r => {
+                const rDate = r.date ? r.date.substring(0, 10) : '';
+                return rDate === dateKey && r.room_id === roomId;
+            });
+            res.forEach(r => {
+                const time = this.getResTimeLabel(r);
+                let label = time ? time + ' : ' : '';
+                let full = label;
+                if (r.event_name && r.event_visibility === 'public') {
+                    label += r.event_name;
+                    full += r.event_name;
+                } else if (r.event_name) {
+                    label += this.getRoomName(r.room_id) + ' — Reserve';
+                    full += this.getRoomName(r.room_id) + ' — Reserve';
+                } else {
+                    label += r.name;
+                    full += r.name;
+                }
+                let type = r.status === 'paid' ? 'confirmed' : (r.status === 'pending' ? 'pending' : (r.status === 'cancelled' ? 'cancelled' : 'pending'));
+                items.push({ id: 'r' + r.id, label, full, type });
+            });
+
+            // Planning events for this room
+            const events = this.planningEvents.filter(e => {
+                const eDate = e.date ? e.date.substring(0, 10) : '';
+                return eDate === dateKey && e.room_id === roomId;
+            });
+            events.forEach(e => {
+                const time = e.start_time ? (e.start_time || '').substring(0, 5) + (e.end_time ? '-' + (e.end_time || '').substring(0, 5) : '') : '';
+                const label = (time ? time + ' : ' : '') + (e.visibility === 'public' ? e.title : 'Reserve');
+                items.push({ id: 'e' + e.id, label, full: label, type: 'event' });
+            });
+
+            return items;
+        },
+
+        getServiceEventsForDayByKey(dateKey) {
+            return this.planningEvents.filter(e => {
+                const eDate = e.date ? e.date.substring(0, 10) : '';
+                return eDate === dateKey && !e.room_id;
+            });
+        },
+
         prevMonth() {
             const d = new Date(this.currentDate);
             d.setMonth(d.getMonth() - 1);
@@ -572,6 +733,7 @@ function planningCalendar() {
         goToToday() {
             this.currentDate = new Date();
             this.selectedDay = null;
+            this.initWeek();
         },
 
         selectDay(day) {
