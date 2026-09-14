@@ -33,6 +33,11 @@ class Reservation extends Model
         'discount_amount',
         'discount_label',
     ];
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
+
     protected $casts = [
         'start_at' => 'datetime',
         'end_at'   => 'datetime',
