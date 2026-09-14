@@ -20,6 +20,47 @@
         </div>
     </div>
 
+    {{-- Filters --}}
+    <div class="card p-4 mb-6">
+        <form method="GET" class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[180px]">
+                <label class="form-label">Recherche</label>
+                <input type="text" name="search" class="form-input !py-2 !text-sm" placeholder="Client, email, evenement, salle..." value="{{ request('search') }}">
+            </div>
+            <div>
+                <label class="form-label">Salle</label>
+                <select name="room_id" class="form-input !py-2 !text-sm">
+                    <option value="">Toutes</option>
+                    @foreach($rooms as $room)
+                        <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>{{ $room->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Statut</label>
+                <select name="status" class="form-input !py-2 !text-sm">
+                    <option value="">Tous</option>
+                    <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>Payee</option>
+                    <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>En attente</option>
+                    <option value="devis" {{ request('status') === 'devis' ? 'selected' : '' }}>Devis</option>
+                    <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Annulee</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Du</label>
+                <input type="date" name="date_from" class="form-input !py-2 !text-sm" value="{{ request('date_from') }}">
+            </div>
+            <div>
+                <label class="form-label">Au</label>
+                <input type="date" name="date_to" class="form-input !py-2 !text-sm" value="{{ request('date_to') }}">
+            </div>
+            <button type="submit" class="btn-primary !py-2 !text-sm">Filtrer</button>
+            @if(request()->hasAny(['search', 'room_id', 'status', 'date_from', 'date_to']))
+                <a href="{{ route('admin.reservations.index') }}" class="btn-ghost !py-2 !text-sm">Reset</a>
+            @endif
+        </form>
+    </div>
+
     <div class="table-container">
         <table>
             <thead>

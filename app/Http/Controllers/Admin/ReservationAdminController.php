@@ -24,10 +24,40 @@ use Illuminate\Support\Facades\Log;
 
 class ReservationAdminController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reservations = Reservation::latest()->get();
-        return view('admin.reservations.index', compact('reservations'));
+        $query = Reservation::with('room')->latest();
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%$s%")
+                  ->orWhere('email', 'like', "%$s%")
+                  ->orWhere('event_name', 'like', "%$s%")
+                  ->orWhereHas('room', fn($r) => $r->where('name', 'like', "%$s%"));
+            });
+        }
+
+        if ($request->filled('room_id')) {
+            $query->where('room_id', $request->room_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('date', '<=', $request->date_to);
+        }
+
+        $reservations = $query->get();
+        $rooms = Room::orderBy('name')->get();
+
+        return view('admin.reservations.index', compact('reservations', 'rooms'));
     }
 
     public function create()
