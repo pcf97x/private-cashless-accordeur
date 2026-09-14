@@ -137,16 +137,16 @@ class ReservationAdminController extends Controller
         ]);
 
         $file = $request->file('file');
-        $extension = $file->getClientOriginalExtension();
+        $extension = strtolower($file->getClientOriginalExtension());
 
-        // Lire le fichier CSV
         $rows = [];
+
         if (in_array($extension, ['csv', 'txt'])) {
+            // CSV
             $handle = fopen($file->getRealPath(), 'r');
             $header = null;
             while (($line = fgetcsv($handle, 0, ';')) !== false) {
                 if (!$header) {
-                    // Nettoyer BOM UTF-8
                     $line[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $line[0]);
                     $header = array_map('strtolower', array_map('trim', $line));
                     continue;
@@ -156,10 +156,39 @@ class ReservationAdminController extends Controller
                 }
             }
             fclose($handle);
+        } elseif (in_array($extension, ['xlsx', 'xls'])) {
+            // Excel
+            try {
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
+                $sheet = $spreadsheet->getActiveSheet();
+                $data = $sheet->toArray(null, true, true, false);
+
+                $header = null;
+                foreach ($data as $line) {
+                    if (!$header) {
+                        $header = array_map('strtolower', array_map('trim', array_map('strval', $line)));
+                        continue;
+                    }
+                    if (count($line) === count($header)) {
+                        $values = array_map(function ($v) {
+                            if ($v instanceof \DateTimeInterface) {
+                                return $v->format('d/m/Y');
+                            }
+                            return trim((string) ($v ?? ''));
+                        }, $line);
+                        $row = array_combine($header, $values);
+                        if (array_filter($row)) {
+                            $rows[] = $row;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                return back()->with('error', 'Erreur de lecture du fichier Excel : ' . $e->getMessage());
+            }
         }
 
         if (empty($rows)) {
-            return back()->with('error', 'Fichier vide ou format non reconnu. Utilisez un CSV avec separateur point-virgule (;).');
+            return back()->with('error', 'Fichier vide ou format non reconnu. Utilisez un CSV (;) ou un fichier Excel (.xlsx).');
         }
 
         $imported = 0;
