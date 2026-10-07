@@ -174,7 +174,6 @@
                             </td>
                             <td class="px-4 py-2.5">
                                 <div class="font-semibold text-gray-900">{{ $checkin->firstname }} {{ $checkin->lastname }}</div>
-                                <div class="text-xs text-gray-400">{{ $checkin->email ?? '' }}</div>
                             </td>
                             <td class="px-4 py-2.5 text-gray-600">{{ $checkin->company ?? '—' }}</td>
                             <td class="px-4 py-2.5">
