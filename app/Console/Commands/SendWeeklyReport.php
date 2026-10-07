@@ -6,6 +6,7 @@ use App\Mail\WeeklyReport;
 use App\Models\Checkin;
 use App\Models\Reservation;
 use App\Models\Setting;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -98,15 +99,37 @@ class SendWeeklyReport extends Command
             'checkins_by_day' => $checkinsByDay,
         ];
 
-        // Send
-        $to = $this->option('to')
-            ?: Setting::get('conciergerie_email', 'laconciergerie@groupe-aprosep.com');
+        // Determine recipients
+        if ($this->option('to')) {
+            $recipients = array_map('trim', explode(',', $this->option('to')));
+        } else {
+            $customEmails = Setting::get('weekly_report_emails', '');
+            if ($customEmails) {
+                $recipients = array_map('trim', explode(',', $customEmails));
+            } else {
+                // All admin users + conciergerie email
+                $recipients = User::where('role', 'admin')->pluck('email')->toArray();
+                $conciergerie = Setting::get('conciergerie_email', '');
+                if ($conciergerie) {
+                    foreach (explode(',', $conciergerie) as $email) {
+                        $email = trim($email);
+                        if ($email && !in_array($email, $recipients)) {
+                            $recipients[] = $email;
+                        }
+                    }
+                }
+            }
+        }
 
-        $recipients = array_map('trim', explode(',', $to));
+        $recipients = array_filter($recipients);
+        if (empty($recipients)) {
+            $this->error('No recipients found.');
+            return 1;
+        }
 
         Mail::to($recipients)->send(new WeeklyReport($data));
 
-        $this->info("Report sent to: $to");
+        $this->info("Report sent to: " . implode(', ', $recipients));
 
         return 0;
     }
