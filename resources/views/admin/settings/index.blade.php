@@ -28,30 +28,6 @@
 
             <hr class="border-gray-100">
 
-            <h3 class="text-sm font-bold text-gray-700">Rapport hebdomadaire</h3>
-
-            <div>
-                <label class="form-label">Activer l'envoi automatique</label>
-                <div class="flex items-center gap-3">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="weekly_report_enabled" value="1" {{ old('weekly_report_enabled', $settings['weekly_report_enabled'] ?? '0') === '1' ? 'checked' : '' }} class="text-accordeur-500 focus:ring-accordeur-500">
-                        <span class="text-sm text-gray-700">Oui — chaque lundi matin</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="weekly_report_enabled" value="0" {{ old('weekly_report_enabled', $settings['weekly_report_enabled'] ?? '0') !== '1' ? 'checked' : '' }} class="text-accordeur-500 focus:ring-accordeur-500">
-                        <span class="text-sm text-gray-700">Non</span>
-                    </label>
-                </div>
-            </div>
-
-            <div>
-                <label class="form-label">Destinataires du rapport</label>
-                <input type="text" name="weekly_report_emails" class="form-input" value="{{ old('weekly_report_emails', $settings['weekly_report_emails'] ?? '') }}" placeholder="Laisser vide = tous les admins + conciergerie">
-                <p class="text-xs text-gray-400 mt-1">Emails separes par une virgule. Si vide, le rapport est envoye a tous les utilisateurs admin + l'email conciergerie.</p>
-            </div>
-
-            <hr class="border-gray-100">
-
             <h3 class="text-sm font-bold text-gray-700">Facturation — Infos entreprise (PDF)</h3>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

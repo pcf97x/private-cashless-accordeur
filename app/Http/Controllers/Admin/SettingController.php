@@ -13,8 +13,6 @@ class SettingController extends Controller
         $settings = [
             'conciergerie_email' => Setting::get('conciergerie_email', 'laconciergerie@groupe-aprosep.com'),
             'admin_email' => Setting::get('admin_email', 'contact@privatecashless.com'),
-            'weekly_report_enabled' => Setting::get('weekly_report_enabled', '0'),
-            'weekly_report_emails' => Setting::get('weekly_report_emails', ''),
             'invoice_company_name' => Setting::get('invoice_company_name', "L'Accordeur - Pole Associatif de Guyane"),
             'invoice_company_address' => Setting::get('invoice_company_address', ''),
             'invoice_company_siret' => Setting::get('invoice_company_siret', ''),
@@ -35,10 +33,6 @@ class SettingController extends Controller
 
         Setting::set('conciergerie_email', $request->conciergerie_email);
         Setting::set('admin_email', $request->admin_email);
-
-        // Weekly report settings
-        Setting::set('weekly_report_enabled', $request->input('weekly_report_enabled', '0'));
-        Setting::set('weekly_report_emails', $request->input('weekly_report_emails', ''));
 
         // Invoice settings
         foreach (['invoice_company_name', 'invoice_company_address', 'invoice_company_siret', 'invoice_company_phone', 'invoice_company_email', 'invoice_payment_info'] as $key) {

@@ -154,10 +154,12 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('ecosystem', EcosystemPartnerController::class)->except(['show']);
     Route::resource('planning-events', PlanningEventController::class)->except(['show']);
 
-    // Rapports de présence
+    // Rapports
     Route::get('/rapports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/rapports/csv', [ReportController::class, 'exportCsv'])->name('reports.csv');
     Route::get('/rapports/pdf', [ReportController::class, 'exportPdf'])->name('reports.pdf');
+    Route::post('/rapports/send-email', [ReportController::class, 'sendEmail'])->name('reports.sendEmail');
+    Route::post('/rapports/settings', [ReportController::class, 'updateSettings'])->name('reports.updateSettings');
 });
 
 // Utilisateurs + Parametres (admin uniquement)

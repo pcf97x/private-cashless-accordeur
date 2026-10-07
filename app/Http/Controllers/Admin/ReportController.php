@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Checkin;
+use App\Models\Setting;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
@@ -27,8 +30,13 @@ class ReportController extends Controller
             ->orderBy('date')->orderBy('start_at')
             ->get();
 
+        $reportSettings = [
+            'weekly_report_enabled' => Setting::get('weekly_report_enabled', '0'),
+            'weekly_report_emails' => Setting::get('weekly_report_emails', ''),
+        ];
+
         return view('admin.reports.index', compact(
-            'checkins', 'stats', 'period', 'date', 'startDate', 'endDate', 'periodLabel', 'reservations'
+            'checkins', 'stats', 'period', 'date', 'startDate', 'endDate', 'periodLabel', 'reservations', 'reportSettings'
         ));
     }
 
@@ -163,5 +171,25 @@ class ReportController extends Controller
             'avg_duration' => sprintf('%dh%02d', intdiv($avgMinutes, 60), $avgMinutes % 60),
             'total_hours' => sprintf('%dh%02d', intdiv($totalMinutes, 60), $totalMinutes % 60),
         ];
+    }
+
+    public function sendEmail(Request $request)
+    {
+        $period = $request->get('period', 'week');
+        $date = $request->get('date', now()->toDateString());
+
+        [$startDate, $endDate, $periodLabel] = $this->resolvePeriod($period, $date);
+
+        Artisan::call('report:weekly', ['--date' => $startDate]);
+
+        return back()->with('success', 'Rapport envoye par email.');
+    }
+
+    public function updateSettings(Request $request)
+    {
+        Setting::set('weekly_report_enabled', $request->input('weekly_report_enabled', '0'));
+        Setting::set('weekly_report_emails', $request->input('weekly_report_emails', ''));
+
+        return back()->with('success', 'Parametres du rapport enregistres.');
     }
 }
