@@ -20,8 +20,15 @@ class ReportController extends Controller
         $checkins = $this->getCheckins($startDate, $endDate);
         $stats = $this->computeStats($checkins);
 
+        // Reservations for the period
+        $reservations = \App\Models\Reservation::with('room')
+            ->whereBetween('date', [$startDate, $endDate])
+            ->whereIn('status', ['paid', 'pending', 'devis'])
+            ->orderBy('date')->orderBy('start_at')
+            ->get();
+
         return view('admin.reports.index', compact(
-            'checkins', 'stats', 'period', 'date', 'startDate', 'endDate', 'periodLabel'
+            'checkins', 'stats', 'period', 'date', 'startDate', 'endDate', 'periodLabel', 'reservations'
         ));
     }
 
@@ -99,6 +106,11 @@ class ReportController extends Controller
                 $ref->toDateString(),
                 $ref->toDateString(),
                 $ref->translatedFormat('l d F Y'),
+            ],
+            'week' => [
+                $ref->copy()->startOfWeek(Carbon::MONDAY)->toDateString(),
+                $ref->copy()->endOfWeek(Carbon::SUNDAY)->toDateString(),
+                'Semaine du ' . $ref->copy()->startOfWeek(Carbon::MONDAY)->format('d/m/Y') . ' au ' . $ref->copy()->endOfWeek(Carbon::SUNDAY)->format('d/m/Y'),
             ],
             'month' => [
                 $ref->copy()->startOfMonth()->toDateString(),
